@@ -15,9 +15,13 @@ hearts = love.graphics.newQuad(330,0,90,119,420,119)
 naipes = {spades=spades,diamonds=diamonds,clubs=clubs,hearts=hearts}
 suitSize = 0.45
 cardfontsize = 24
+round = 7
 cardfont = love.graphics.newFont(cardfontsize)
 cardw,cardh = 100,150
 cardColor = {1,1,1}
+androidSpacing = 100
+androidInterSpacing = 10
+androidSmall = 0.1
 
 system = love.system.getOS()
 
@@ -31,6 +35,16 @@ function love.load()
     --cardlists[#cardlists+1] = {{number="K",suit="clubs"},{number="Q",suit="hearts"}}
     if system~="Android" then
         love.window.setMode(800,600)
+    else
+        suitSize=suitSize/1.8
+        cardw=cardw/2
+        cardh=cardh/2
+        round = 3
+        androidSpacing=50
+        androidSmall=0.03
+        androidInterSpacing=5
+        cardfontsize=cardfontsize/2
+        cardfont=love.graphics.newFont(cardfontsize)
     end
     startGame()
 end
@@ -53,8 +67,8 @@ function love.update(dt)
                         v.visible=true
                         cardlists[list][index+i] = v
                     end
-                    if cardonhand.lastlist~="litter" then
-                        if #cardlists[cardonhand.lastlist]>0 then
+                    if cardonhand.lastlist~="litter" then                        
+                        if #cardlists[cardonhand.lastlist]>0 then                            
                             cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
                         end
                     end
@@ -111,6 +125,11 @@ function love.update(dt)
                     for i,v in ipairs(cardonhand) do                        
                         addCardToList(baselist,v.number,v.suit,true)
                     end
+                    if cardonhand.lastlist~="litter" then                        
+                        if #cardlists[cardonhand.lastlist]>0 then                            
+                            cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
+                        end
+                    end
                     cardonhand=nil
                 end
             else
@@ -136,7 +155,9 @@ function love.mousepressed(x, y, button, istouch)
             if card then
                 cardonhand=card
                 cardonhand.lastlist=list
-                cardlists[list][index]=nil
+                for i=index,index+#card-1 do
+                    cardlists[list][i]=nil
+                end
             else
                 if checkStack(x,y) then
                     if #cardstacks>0 then
@@ -156,6 +177,9 @@ function love.mousepressed(x, y, button, istouch)
                     end
                 end
             end
+            local button = checkForButtons(x,y)
+            if button then
+                
         end
     end
  end
@@ -163,14 +187,14 @@ function love.mousepressed(x, y, button, istouch)
 function love.draw()
     local mousex, mousey = love.mouse.getPosition()
     for i=1,7 do -- drawing the bottom of the lists
-        local x = i * (cardw+10) - 100
+        local x = i * (cardw+androidInterSpacing) - androidSpacing
         local y = (cardh-cardh+cardfontsize+5) + (cardh + 40)
         love.graphics.setColor(1,1,1,0.3)
         love.graphics.rectangle("fill",x,y,cardw,cardh,7)
         love.graphics.setColor(1,1,1,1)
     end
     for i=1,4 do --drawing the bottom of the piles
-        local x = i * (cardw+10) - 100
+        local x = i * (cardw+androidInterSpacing) - androidSpacing
         local y = cardh-cardh+cardfontsize+5
         love.graphics.setColor(1,1,1,0.3)
         love.graphics.rectangle("fill",x,y,cardw,cardh,7)
@@ -183,7 +207,7 @@ function love.draw()
     love.graphics.setColor(1,1,1,1)
 
     for k,v in ipairs(cardlists) do
-        local x = k * (cardw+10) - 100
+        local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
             local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40)
             if card.visible then 
@@ -195,7 +219,7 @@ function love.draw()
     end
 
     for i=1,4 do
-        local x = i * (cardw+10) - 100
+        local x = i * (cardw+androidInterSpacing) - androidSpacing
         local y = cardh-cardh+cardfontsize+5
         if cardpile[i] then
             local card = cardpile[i][#cardpile[i]]
@@ -205,8 +229,8 @@ function love.draw()
     local max=#cardlitter
     if max>3 then max=3 end    
     for i=1,max do
-        local tempx = (5+i) * (cardw+10) - 100
-        local x = tempx - i*cardw*0.75
+        local tempx = (5+i) * (cardw+androidInterSpacing) - androidSpacing
+        local x = tempx - i*cardw*0.75 - (100-androidSpacing)
         local y = cardh-cardh+cardfontsize+5
         if cardlitter[#cardlitter-max+i] then
             local card = cardlitter[#cardlitter-max+i]
@@ -233,9 +257,9 @@ function drawCard(number,suit,x,y)
         colorsuit={1,0,0}
     end
     love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,7)
+    love.graphics.rectangle("line",x,y,cardw,cardh,round)
     love.graphics.setColor(cardColor)
-    love.graphics.rectangle("fill",x,y,cardw,cardh,7)    
+    love.graphics.rectangle("fill",x,y,cardw,cardh,round)    
     love.graphics.setColor(colortext)
     love.graphics.print(tostring(number),cardfont,x+2,y)
     love.graphics.printf(tostring(number),cardfont,x,y+cardh-cardfontsize-3,cardw-2,"right")
@@ -251,15 +275,15 @@ function drawCard(number,suit,x,y)
         insideSuitSize=insideSuitSize+0.20
         y=y-5
     end
-    love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-0.1)
+    love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
     love.graphics.setColor(1,1,1)
 end
 
 function drawBack(x,y)
     love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,7)
-    love.graphics.setColor(0.8,0.6,0.63)
-    love.graphics.rectangle("fill",x,y,cardw,cardh,7)
+    love.graphics.rectangle("line",x,y,cardw,cardh,round)
+    love.graphics.setColor(love.math.colorFromBytes(204, 204, 255))
+    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
     love.graphics.setColor(1,1,1)
 end
 
@@ -275,7 +299,7 @@ end
 
 function checkCollision(mx,my)
     for k,v in ipairs(cardlists) do
-        local x = k * (cardw+10) - 100
+        local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
             local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40)
             if card.visible and i~=#v then
@@ -299,7 +323,7 @@ end
 
 function checkCollisionTwo(mx,my)
     for k,v in ipairs(cardlists) do
-        local x = k * (cardw+10) - 100
+        local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
             local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40)
             if i==#v then
@@ -314,7 +338,7 @@ end
 
 function checkForList(mx,my)
     for i=1,7 do
-        local x = i * (cardw+10) - 100
+        local x = i * (cardw+androidInterSpacing) - androidSpacing
         local y = (cardh-cardh+cardfontsize+5) + (cardh + 40)
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
             return i
@@ -324,7 +348,7 @@ end
 
 function checkPile(mx,my)
     for i=1,4 do --drawing the bottom of the piles
-        local x = i * (cardw+10) - 100
+        local x = i * (cardw+androidInterSpacing) - androidSpacing
         local y = cardh-cardh+cardfontsize+5
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then            
             return i
@@ -346,8 +370,8 @@ function checkLitter(mx,my)
     local max=#cardlitter
     if max>3 then max=3 end    
     for i=1,max do
-        local tempx = (5+i) * (cardw+10) - 100
-        local x = tempx - i*cardw*0.75
+        local tempx = (5+i) * (cardw+androidInterSpacing) - androidSpacing
+        local x = tempx - i*cardw*0.75 - (100-androidSpacing)
         local y = cardh-cardh+cardfontsize+5
         if cardlitter[#cardlitter-max+i] then
             local card = cardlitter[#cardlitter-max+i]
