@@ -21,7 +21,16 @@ cardw,cardh = 100,150
 cardColor = {1,1,1}
 androidSpacing = 100
 androidInterSpacing = 10
+androidOverhead = 0
 androidSmall = 0.1
+
+buttons = {
+    {img=love.graphics.newImage("img/undo.png")},
+    {img=love.graphics.newImage("img/stats.png")},
+    {img=love.graphics.newImage("img/new.png")},
+    {img=love.graphics.newImage("img/market.png")},
+    {img=love.graphics.newImage("img/redo.png")}
+}
 
 system = love.system.getOS()
 
@@ -35,16 +44,28 @@ function love.load()
     --cardlists[#cardlists+1] = {{number="K",suit="clubs"},{number="Q",suit="hearts"}}
     if system~="Android" then
         love.window.setMode(800,600)
+        screenw, screenh = love.graphics.getDimensions()
     else
         suitSize=suitSize/1.8
         cardw=cardw/2
         cardh=cardh/2
         round = 3
         androidSpacing=50
+        androidOverhead=50
         androidSmall=0.03
         androidInterSpacing=5
         cardfontsize=cardfontsize/2
         cardfont=love.graphics.newFont(cardfontsize)
+        love.window.maximize()
+        love.window.setFullscreen(true)
+        local wait=0
+        while wait<750 do
+            wait=wait+1
+            love.timer.sleep(0.01)
+            love.window.setFullscreen(true)
+            love.graphics.getDimensions()
+        end
+        screenw, screenh = love.graphics.getDimensions()
     end
     startGame()
 end
@@ -122,15 +143,28 @@ function love.update(dt)
                 end
             elseif baselist then
                 if cardonhand[1].number=="K" then
-                    for i,v in ipairs(cardonhand) do                        
-                        addCardToList(baselist,v.number,v.suit,true)
-                    end
-                    if cardonhand.lastlist~="litter" then                        
-                        if #cardlists[cardonhand.lastlist]>0 then                            
-                            cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
+                    if #cardlists[baselist]==0 then
+                        for i,v in ipairs(cardonhand) do                        
+                            addCardToList(baselist,v.number,v.suit,true)
                         end
+                        if cardonhand.lastlist~="litter" then                        
+                            if #cardlists[cardonhand.lastlist]>0 then                            
+                                cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
+                            end
+                        end
+                        cardonhand=nil
                     end
-                    cardonhand=nil
+                else
+                    if cardonhand.lastlist=="litter" then
+                        cardlitter[#cardlitter+1]=cardonhand[1]
+                        cardonhand=nil
+                    else
+                        local index = #cardlists[cardonhand.lastlist]
+                        for i,v in ipairs(cardonhand) do
+                            cardlists[cardonhand.lastlist][index+i] = v
+                        end
+                        cardonhand=nil
+                    end 
                 end
             else
                 if cardonhand.lastlist=="litter" then
@@ -179,7 +213,8 @@ function love.mousepressed(x, y, button, istouch)
             end
             local button = checkForButtons(x,y)
             if button then
-                
+                pressButton(button)
+            end
         end
     end
  end
@@ -188,28 +223,28 @@ function love.draw()
     local mousex, mousey = love.mouse.getPosition()
     for i=1,7 do -- drawing the bottom of the lists
         local x = i * (cardw+androidInterSpacing) - androidSpacing
-        local y = (cardh-cardh+cardfontsize+5) + (cardh + 40)
+        local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
         love.graphics.setColor(1,1,1,0.3)
-        love.graphics.rectangle("fill",x,y,cardw,cardh,7)
+        love.graphics.rectangle("fill",x,y,cardw,cardh,round)
         love.graphics.setColor(1,1,1,1)
     end
     for i=1,4 do --drawing the bottom of the piles
         local x = i * (cardw+androidInterSpacing) - androidSpacing
-        local y = cardh-cardh+cardfontsize+5
+        local y = cardh-cardh+cardfontsize+5 + androidOverhead
         love.graphics.setColor(1,1,1,0.3)
-        love.graphics.rectangle("fill",x,y,cardw,cardh,7)
+        love.graphics.rectangle("fill",x,y,cardw,cardh,round)
         love.graphics.setColor(1,1,1,1)
     end
     
     --drawing the bottom of the stack
     love.graphics.setColor(1,1,1,0.3)
-    love.graphics.rectangle("fill",7*(cardw+10)-100,cardh-cardh+cardfontsize+5,cardw,cardh,7)
+    love.graphics.rectangle("fill",7*(cardw+10)-100,cardh-cardh+cardfontsize+5+androidOverhead,cardw,cardh,round)
     love.graphics.setColor(1,1,1,1)
 
     for k,v in ipairs(cardlists) do
         local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
-            local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40)
+            local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
             if card.visible then 
                 drawCard(card.number,card.suit,x,y)
             else
@@ -220,7 +255,7 @@ function love.draw()
 
     for i=1,4 do
         local x = i * (cardw+androidInterSpacing) - androidSpacing
-        local y = cardh-cardh+cardfontsize+5
+        local y = cardh-cardh+cardfontsize+5 + androidOverhead
         if cardpile[i] then
             local card = cardpile[i][#cardpile[i]]
             drawCard(card.number,card.suit,x,y)
@@ -231,14 +266,14 @@ function love.draw()
     for i=1,max do
         local tempx = (5+i) * (cardw+androidInterSpacing) - androidSpacing
         local x = tempx - i*cardw*0.75 - (100-androidSpacing)
-        local y = cardh-cardh+cardfontsize+5
+        local y = cardh-cardh+cardfontsize+5 + androidOverhead
         if cardlitter[#cardlitter-max+i] then
             local card = cardlitter[#cardlitter-max+i]
             drawCard(card.number,card.suit,x,y)
         end
     end    
     if #cardstacks>0 then
-        drawBack(7*(cardw+10)-100,cardh-cardh+cardfontsize+5)
+        drawBack(7*(cardw+10)-100,cardh-cardh+cardfontsize+5+androidOverhead)
     end
     if cardonhand then
         for i,v in ipairs(cardonhand) do
@@ -246,6 +281,51 @@ function love.draw()
             local y = mousey-cardh/2 + i * (cardh-cardh+cardfontsize+5)
             drawCard(v.number,v.suit,x,y)
         end
+    end
+
+    --draw buttons
+    drawButtons()
+end
+
+function drawButtons()
+    --love.graphics.setColor(0,0,0,0.5)
+    local androidFactor = 0.25
+    if system=="Android" then androidFactor=0.15 end    
+    --local y = screenh-(128*androidFactor)-20
+    --love.graphics.rectangle("fill",0,y,screenw,screenh-y)
+    --love.graphics.setColor(1,1,1,1)
+    --for i=1,#buttons do
+    --    local index = #buttons-i+1
+    --    local btn = buttons[i]
+    --    local x = 
+    --    love.graphics.draw(btn.img,x,y+10,0,androidFactor)
+    --end
+    local buttonWidth = 256*androidFactor -- Largura dos botões (ajuste conforme necessário)
+    local buttonHeight = 256*androidFactor -- Altura dos botões (ajuste conforme necessário)
+    local minPadding = 10 -- Espaçamento entre os botões (ajuste conforme necessário)
+    local numButtons = #buttons
+
+     -- Calcula o total de largura ocupada pelos botões
+    -- Calcula a largura total ocupada pelos botões
+    local totalButtonsWidth = numButtons * buttonWidth
+
+    -- Calcula o padding necessário para centralizar os botões
+    local totalPadding = math.max((screenw - totalButtonsWidth) / (numButtons + 1), minPadding)
+
+    -- Calcula a posição x inicial para o primeiro botão
+    local xStart = (screenw - (totalButtonsWidth + totalPadding * (numButtons - 1))) / 2
+
+
+    -- Calcula a posição y dos botões colados na parte inferior da tela
+    local y = screenh - buttonHeight - 20
+
+    love.graphics.setColor(0, 0, 0, 0.5)
+    love.graphics.rectangle("fill", 0, y, screenw, screenh-y)
+    love.graphics.setColor(1, 1, 1, 1)
+
+    for i, btn in ipairs(buttons) do
+        local x = xStart + (i - 1) * (buttonWidth + totalPadding)
+        love.graphics.draw(btn.img, x, y + 10, 0, androidFactor)
     end
 end
 
@@ -301,7 +381,7 @@ function checkCollision(mx,my)
     for k,v in ipairs(cardlists) do
         local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
-            local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40)
+            local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
             if card.visible and i~=#v then
                 if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh-cardh+cardfontsize+5 then
                     local obj={}
@@ -325,7 +405,7 @@ function checkCollisionTwo(mx,my)
     for k,v in ipairs(cardlists) do
         local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
-            local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40)
+            local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
             if i==#v then
                 if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
                     return card,k,i
@@ -339,7 +419,7 @@ end
 function checkForList(mx,my)
     for i=1,7 do
         local x = i * (cardw+androidInterSpacing) - androidSpacing
-        local y = (cardh-cardh+cardfontsize+5) + (cardh + 40)
+        local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
             return i
         end
@@ -349,7 +429,7 @@ end
 function checkPile(mx,my)
     for i=1,4 do --drawing the bottom of the piles
         local x = i * (cardw+androidInterSpacing) - androidSpacing
-        local y = cardh-cardh+cardfontsize+5
+        local y = cardh-cardh+cardfontsize+5 + androidOverhead
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then            
             return i
         end
@@ -359,7 +439,7 @@ end
 
 function checkStack(mx,my)
     local x = 7*(cardw+10)-100
-    local y = cardh-cardh+cardfontsize+5
+    local y = cardh-cardh+cardfontsize+5 + androidOverhead
     if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then            
         return true
     end
@@ -372,7 +452,7 @@ function checkLitter(mx,my)
     for i=1,max do
         local tempx = (5+i) * (cardw+androidInterSpacing) - androidSpacing
         local x = tempx - i*cardw*0.75 - (100-androidSpacing)
-        local y = cardh-cardh+cardfontsize+5
+        local y = cardh-cardh+cardfontsize+5 + androidOverhead
         if cardlitter[#cardlitter-max+i] then
             local card = cardlitter[#cardlitter-max+i]
             if i==max then
@@ -383,6 +463,35 @@ function checkLitter(mx,my)
         end
     end  
     return nil
+end
+
+function checkForButtons(mx,my)        
+        local androidFactor = 0.25
+        if system=="Android" then androidFactor=0.15 end    
+        local buttonWidth = 256*androidFactor -- Largura dos botões (ajuste conforme necessário)
+        local buttonHeight = 256*androidFactor -- Altura dos botões (ajuste conforme necessário)
+        local minPadding = 10 -- Espaçamento entre os botões (ajuste conforme necessário)
+        local numButtons = #buttons
+    
+         -- Calcula o total de largura ocupada pelos botões
+        -- Calcula a largura total ocupada pelos botões
+        local totalButtonsWidth = numButtons * buttonWidth
+    
+        -- Calcula o padding necessário para centralizar os botões
+        local totalPadding = math.max((screenw - totalButtonsWidth) / (numButtons + 1), minPadding)
+    
+        -- Calcula a posição x inicial para o primeiro botão
+        local xStart = (screenw - (totalButtonsWidth + totalPadding * (numButtons - 1))) / 2
+    
+    
+        -- Calcula a posição y dos botões colados na parte inferior da tela
+        local y = screenh - buttonHeight - 20
+        for i, btn in ipairs(buttons) do
+            local x = xStart + (i - 1) * (buttonWidth + totalPadding)
+            if mx >= x and mx <= x+buttonWidth and my >= y and my <= y+buttonHeight then            
+                return i
+            end
+        end
 end
 
 function checkOpposite(suitx,suity)
@@ -403,6 +512,7 @@ function checkIfPost(xnumber,ynumber)
 end
 
 function startGame()
+    resetCards()
     leftToAdd = allCards()
     for column=1,7 do
         for row=1,column do
@@ -422,6 +532,14 @@ function startGame()
     end
 end
 
+function resetCards()
+    cardlists = {}
+    cardlitter = {}
+    cardonhand = nil
+    cardpile = {}
+    cardstacks = {}
+end
+
 function allCards()
     local obj = {}
     for i=1,#ordem do
@@ -432,3 +550,17 @@ function allCards()
     return obj
 end
 
+
+function pressButton(btn)
+    if btn==1 then --UNDO
+        
+    elseif btn==2 then --STATS
+
+    elseif btn==3 then --NEW
+        startGame()
+    elseif btn==4 then --STORE
+
+    elseif btn==5 then --REDO
+
+    end
+end
