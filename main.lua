@@ -199,7 +199,7 @@ function love.mousepressed(x, y, button, istouch)
                         cardlitter[#cardlitter+1] = card
                         table.remove(cardstacks,#cardstacks)
                     else
-                        cardstacks = cardlitter
+                        cardstacks = invertTable(cardlitter)
                         cardlitter = {}
                     end
                 else
@@ -546,6 +546,14 @@ function allCards()
         for j=1,#cnaipes do
             obj[#obj+1] = {number=ordem[i],suit=cnaipes[j]}
         end
+    end
+    return obj
+end
+
+function invertTable(list)
+    local obj = {}
+    for i=1,#list do
+        obj[#list-i+1] = list[i]
     end
     return obj
 end
