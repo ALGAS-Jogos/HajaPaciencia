@@ -32,6 +32,9 @@ buttons = {
     {img=love.graphics.newImage("img/redo.png")}
 }
 
+lastMoves = {}
+lastMovesIndex = 1
+
 system = love.system.getOS()
 
 love.graphics.setBackgroundColor(0.2,0.05,0.2)
@@ -88,57 +91,33 @@ function love.update(dt)
                         v.visible=true
                         cardlists[list][index+i] = v
                     end
-                    if cardonhand.lastlist~="litter" then                        
-                        if #cardlists[cardonhand.lastlist]>0 then                            
-                            cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
-                        end
-                    end
+                    makeVisible()
                     cardonhand=nil
                 else
-                    if cardonhand.lastlist=="litter" then
-                        cardlitter[#cardlitter+1]=cardonhand[1]
-                        cardonhand=nil
-                    else
-                        local index = #cardlists[cardonhand.lastlist]
-                        for i,v in ipairs(cardonhand) do
-                            cardlists[cardonhand.lastlist][index+i] = v
-                        end
-                        cardonhand=nil
-                    end                    
+                    cardonhand = returnCard()                
                 end
             elseif pile then
                 if cardpile[pile] then
                     local lastCardPile = cardpile[pile][#cardpile[pile]]
-                    if cardonhand[1].suit==lastCardPile.suit and checkIfPost(lastCardPile.number,cardonhand[1].number) then
-                        cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
-                        if cardonhand.lastlist~="litter" then
-                            if #cardlists[cardonhand.lastlist]>0 then
-                                cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
-                            end
-                        end
-                        cardonhand=nil
-                    else
-                        if cardonhand.lastlist=="litter" then
-                            cardlitter[#cardlitter+1]=cardonhand[1]
+                    if lastCardPile then --checa se a ultima carta não é nula
+                        if cardonhand[1].suit==lastCardPile.suit and checkIfPost(lastCardPile.number,cardonhand[1].number) then
+                            cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
+                            makeVisible()
                             cardonhand=nil
                         else
-                            local index = #cardlists[cardonhand.lastlist]
-                            for i,v in ipairs(cardonhand) do
-                                cardlists[cardonhand.lastlist][index+i] = v
-                            end
-                            cardonhand=nil
-                        end 
-                    end
-                else
-                    cardpile[pile] = {}
-                    if cardonhand[1].number=="A" then
-                        cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
-                        if cardonhand.lastlist~="litter" then
-                            if #cardlists[cardonhand.lastlist]>0 then
-                                cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
-                            end
+                            cardonhand = returnCard()
                         end
+                    else
+                        cardonhand = returnCard()
+                    end
+                else                    
+                    if cardonhand[1].number=="A" then
+                        cardpile[pile] = {}
+                        cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
+                        makeVisible()
                         cardonhand=nil
+                    else
+                        cardonhand = returnCard()
                     end
                 end
             elseif baselist then
@@ -147,36 +126,14 @@ function love.update(dt)
                         for i,v in ipairs(cardonhand) do                        
                             addCardToList(baselist,v.number,v.suit,true)
                         end
-                        if cardonhand.lastlist~="litter" then                        
-                            if #cardlists[cardonhand.lastlist]>0 then                            
-                                cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
-                            end
-                        end
+                        makeVisible()
                         cardonhand=nil
                     end
                 else
-                    if cardonhand.lastlist=="litter" then
-                        cardlitter[#cardlitter+1]=cardonhand[1]
-                        cardonhand=nil
-                    else
-                        local index = #cardlists[cardonhand.lastlist]
-                        for i,v in ipairs(cardonhand) do
-                            cardlists[cardonhand.lastlist][index+i] = v
-                        end
-                        cardonhand=nil
-                    end 
+                    cardonhand = returnCard()
                 end
             else
-                if cardonhand.lastlist=="litter" then
-                    cardlitter[#cardlitter+1]=cardonhand[1]
-                    cardonhand=nil
-                else
-                    local index = #cardlists[cardonhand.lastlist]
-                    for i,v in ipairs(cardonhand) do
-                        cardlists[cardonhand.lastlist][index+i] = v
-                    end
-                    cardonhand=nil
-                end 
+                cardonhand = returnCard()
             end
         end
     end
@@ -186,11 +143,22 @@ function love.mousepressed(x, y, button, istouch)
     if button == 1 then -- Versions prior to 0.10.0 use the MouseConstant 'l'
         if cardonhand==nil then
             local card,list,index = checkCollision(x,y)
+            local pile = checkPile(x,y)
             if card then
                 cardonhand=card
                 cardonhand.lastlist=list
                 for i=index,index+#card-1 do
                     cardlists[list][i]=nil
+                end
+            elseif pile then
+                local pileToTake = cardpile[pile]
+                if pileToTake then
+                    if #pileToTake>0 then
+                        cardonhand = {cardpile[pile][#cardpile[pile]]}              
+                        table.remove(pileToTake,#pileToTake)
+                        if #cardpile[pile]==0 then cardpile[pile] = nil end
+                        cardonhand.lastlist="pile"..pile
+                    end
                 end
             else
                 if checkStack(x,y) then
@@ -203,7 +171,7 @@ function love.mousepressed(x, y, button, istouch)
                         cardlitter = {}
                     end
                 else
-                    local card = checkLitter(x,y)
+                    local card = checkLitter(x,y)                    
                     if card then
                         cardonhand=card
                         cardonhand.lastlist="litter"
@@ -258,7 +226,9 @@ function love.draw()
         local y = cardh-cardh+cardfontsize+5 + androidOverhead
         if cardpile[i] then
             local card = cardpile[i][#cardpile[i]]
-            drawCard(card.number,card.suit,x,y)
+            if card then
+                drawCard(card.number,card.suit,x,y)
+            end
         end
     end
     local max=#cardlitter
@@ -278,7 +248,7 @@ function love.draw()
     if cardonhand then
         for i,v in ipairs(cardonhand) do
             local x = mousex-cardw/2
-            local y = mousey-cardh/2 + i * (cardh-cardh+cardfontsize+5)
+            local y = mousey-cardh/2 + i * (cardh-cardh+cardfontsize+5+androidOverhead)
             drawCard(v.number,v.suit,x,y)
         end
     end
@@ -570,5 +540,34 @@ function pressButton(btn)
 
     elseif btn==5 then --REDO
 
+    end
+end
+
+function returnCard()
+    if cardonhand.lastlist=="litter" then
+        cardlitter[#cardlitter+1]=cardonhand[1]
+    elseif string.match(cardonhand.lastlist,"pile") then
+        local pile = tonumber(string.sub(cardonhand.lastlist,5))
+        local actualPile = cardpile[pile]
+        if actualPile then
+            actualPile[#actualPile+1] = cardonhand[1]
+        else
+            cardpile[pile] = {}
+            cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
+        end
+    else
+        local index = #cardlists[cardonhand.lastlist]
+        for i,v in ipairs(cardonhand) do
+            cardlists[cardonhand.lastlist][index+i] = v
+        end
+    end
+    return nil
+end
+
+function makeVisible()
+    if cardonhand.lastlist~="litter" and not string.match(cardonhand.lastlist,"pile") then
+        if #cardlists[cardonhand.lastlist]>0 then
+            cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
+        end
     end
 end
