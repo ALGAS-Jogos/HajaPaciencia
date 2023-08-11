@@ -34,6 +34,7 @@ buttons = {
 
 lastMoves = {}
 lastMovesIndex = 1
+forwardMoves = {}
 
 system = love.system.getOS()
 
@@ -87,22 +88,25 @@ function love.update(dt)
             
             if card then          
                 if checkOpposite(card.suit,cardonhand[1].suit) and checkIfPost(cardonhand[1].number,card.number) then                    
+                    local newIndex = index+1
                     for i,v in ipairs(cardonhand) do
                         v.visible=true
                         cardlists[list][index+i] = v
                     end
                     makeVisible()
+                    putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex)
                     cardonhand=nil
                 else
                     cardonhand = returnCard()                
                 end
-            elseif pile then
+            elseif pile and #cardonhand==1 then
                 if cardpile[pile] then
                     local lastCardPile = cardpile[pile][#cardpile[pile]]
                     if lastCardPile then --checa se a ultima carta não é nula
                         if cardonhand[1].suit==lastCardPile.suit and checkIfPost(lastCardPile.number,cardonhand[1].number) then
                             cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
                             makeVisible()
+                            putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
                             cardonhand=nil
                         else
                             cardonhand = returnCard()
@@ -115,6 +119,7 @@ function love.update(dt)
                         cardpile[pile] = {}
                         cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
                         makeVisible()
+                        putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
                         cardonhand=nil
                     else
                         cardonhand = returnCard()
@@ -127,6 +132,7 @@ function love.update(dt)
                             addCardToList(baselist,v.number,v.suit,true)
                         end
                         makeVisible()
+                        putLastMove(cardonhand.lastlist,baselist,#cardonhand,1)
                         cardonhand=nil
                     end
                 else
@@ -508,6 +514,10 @@ function resetCards()
     cardonhand = nil
     cardpile = {}
     cardstacks = {}
+
+    forwardMoves={}
+    lastMoves={}
+    lastMovesIndex=1
 end
 
 function allCards()
@@ -531,7 +541,7 @@ end
 
 function pressButton(btn)
     if btn==1 then --UNDO
-        
+        getUndo()
     elseif btn==2 then --STATS
 
     elseif btn==3 then --NEW
@@ -539,7 +549,7 @@ function pressButton(btn)
     elseif btn==4 then --STORE
 
     elseif btn==5 then --REDO
-
+        getRedo()
     end
 end
 
@@ -571,3 +581,91 @@ function makeVisible()
         end
     end
 end
+
+function putLastMove(oldLocation,newLocation,size,index)
+    local move = oldLocation.."|"..newLocation.."|"..size.."|"..index
+    lastMoves[#lastMoves+1] = move
+    lastMovesIndex = #lastMoves+1
+    forwardMoves = {}
+end
+
+function getUndo()
+    if lastMovesIndex>1 then
+        local undoObj = lastMoves[lastMovesIndex-1]
+        lastMovesIndex = lastMovesIndex - 1
+        local splitted = split(undoObj,"|")
+        local from = splitted[2]
+        local to = splitted[1]
+        local size = tonumber(splitted[3])
+        local index = tonumber(splitted[4])
+        execMove(from,to,size,index)
+        forwardMoves[#forwardMoves+1] = from.."|"..to.."|"..size.."|"..index
+        table.remove(lastMoves,lastMovesIndex)
+    end
+end
+
+function getRedo()
+    if #forwardMoves>0 then
+        local redoObj = forwardMoves[#forwardMoves]
+        local splitted = split(redoObj,"|")
+        local from = splitted[2]
+        local to = splitted[1]
+        local size = tonumber(splitted[3])
+        local index = tonumber(splitted[4])
+        execMove(from,to,size,index)
+        lastMoves[#lastMoves+1] = from.."|"..to.."|"..size.."|"..index
+        lastMovesIndex = #lastMoves+1
+        table.remove(forwardMoves,#forwardMoves)
+    end
+end
+
+function execMove(from,to,size,index)
+    --get card
+    local card = {}
+    if string.match(from,"pile") then
+        local pile = tonumber(string.sub(from,5)) or 1
+        local actualPile = cardpile[pile]
+        card = {actualPile[#actualPile]}
+        table.remove(actualPile,#actualPile)
+        if #actualPile==0 then cardpile[pile] = nil end
+    elseif from=="litter" then
+        card = {cardlitter[#cardlitter]}
+        table.remove(cardlitter,#cardlitter)
+    else
+        from = tonumber(from)        
+        for i=index,#cardlists[from] do
+            card[#card+1] = cardlists[from][i]
+        end
+        for i=index,#cardlists[from] do
+            table.remove(cardlists[from],index)
+        end
+        print(#card)
+        if cardlists[from][#cardlists[from]] then cardlists[from][#cardlists[from]].visible=true end 
+    end
+
+    --put card
+    if string.match(to,"pile") then
+        local pile = tonumber(string.sub(to,5)) or 1
+        local actualPile = cardpile[pile]
+        if actualPile==nil then cardpile[pile] = {}; actualPile=cardpile[pile] end
+        actualPile[#actualPile+1] = card[1]
+    elseif to=="litter" then
+        cardlitter[#cardlitter+1] = card[1]
+    else
+        to = tonumber(to)
+        for i=1,#card do
+            print(card[i] or "FUCK YOU!!!", i)
+            cardlists[to][#cardlists[to]+1] = card[i]
+        end
+        if cardlists[to][#cardlists[to]-size] then cardlists[to][#cardlists[to]-size].visible = false end
+    end
+end
+
+function split(str, sep)
+    local result = {}
+    local regex = ("([^%s]+)"):format(sep)
+    for each in string.gmatch(str,regex) do
+       table.insert(result, each)
+    end
+    return result
+ end
