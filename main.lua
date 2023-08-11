@@ -598,7 +598,7 @@ function getUndo()
         local to = splitted[1]
         local size = tonumber(splitted[3])
         local index = tonumber(splitted[4])
-        execMove(from,to,size,index)
+        index = execMove(from,to,size,index,"undo")
         forwardMoves[#forwardMoves+1] = from.."|"..to.."|"..size.."|"..index
         table.remove(lastMoves,lastMovesIndex)
     end
@@ -612,14 +612,14 @@ function getRedo()
         local to = splitted[1]
         local size = tonumber(splitted[3])
         local index = tonumber(splitted[4])
-        execMove(from,to,size,index)
+        index =execMove(from,to,size,index,"redo")
         lastMoves[#lastMoves+1] = from.."|"..to.."|"..size.."|"..index
         lastMovesIndex = #lastMoves+1
         table.remove(forwardMoves,#forwardMoves)
     end
 end
 
-function execMove(from,to,size,index)
+function execMove(from,to,size,index,operation)
     --get card
     local card = {}
     if string.match(from,"pile") then
@@ -649,15 +649,18 @@ function execMove(from,to,size,index)
         local actualPile = cardpile[pile]
         if actualPile==nil then cardpile[pile] = {}; actualPile=cardpile[pile] end
         actualPile[#actualPile+1] = card[1]
+        return #actualPile
     elseif to=="litter" then
         cardlitter[#cardlitter+1] = card[1]
+        return #cardlitter
     else
         to = tonumber(to)
         for i=1,#card do
             print(card[i] or "FUCK YOU!!!", i)
             cardlists[to][#cardlists[to]+1] = card[i]
         end
-        if cardlists[to][#cardlists[to]-size] then cardlists[to][#cardlists[to]-size].visible = false end
+        if cardlists[to][#cardlists[to]-size] and operation=="undo" then cardlists[to][#cardlists[to]-size].visible = false end
+        return #cardlists[to]-size+1
     end
 end
 
