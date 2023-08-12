@@ -7,7 +7,7 @@ cardstacks = {}
 cardpile = {}
 cardlitter = {}
 cardonhand = nil
-suits = love.graphics.newImage("img/suits.png")
+suits = love.graphics.newImage("img/out.png")
 spades = love.graphics.newQuad(0,0,100,119,420,119)
 diamonds = love.graphics.newQuad(110,0,90,119,420,119)
 clubs = love.graphics.newQuad(220,0,90,119,420,119)
@@ -18,7 +18,6 @@ cardfontsize = 24
 round = 7
 cardfont = love.graphics.newFont(cardfontsize)
 cardw,cardh = 100,150
-cardColor = {1,1,1}
 androidSpacing = 100
 androidInterSpacing = 10
 androidOverhead = 0
@@ -37,6 +36,22 @@ lastMovesIndex = 1
 forwardMoves = {}
 
 system = love.system.getOS()
+
+inStore = false
+inStats = false
+
+storeItems = {
+    {color={0.925,0.843,0.98},textcolor={0.224,0,0.369},suitcolor={0.224,0,0.369},casered={0.988,0.176,0.678},font=cardfont,backImg=nil,price=500,bought=false}
+}
+
+cardStyle = {
+    color={1,1,1},
+    textcolor={0.2,0.2,0.2},
+    suitcolor={0.2,0.2,0.2},
+    casered={1,0.2,0.2},
+    backImg=love.graphics.newImage("test2.jpg"),
+    font=cardfont
+}
 
 love.graphics.setBackgroundColor(0.2,0.05,0.2)
 
@@ -146,49 +161,55 @@ function love.update(dt)
 end
 
 function love.mousepressed(x, y, button, istouch)
-    if button == 1 then -- Versions prior to 0.10.0 use the MouseConstant 'l'
-        if cardonhand==nil then
-            local card,list,index = checkCollision(x,y)
-            local pile = checkPile(x,y)
-            if card then
-                cardonhand=card
-                cardonhand.lastlist=list
-                for i=index,index+#card-1 do
-                    cardlists[list][i]=nil
-                end
-            elseif pile then
-                local pileToTake = cardpile[pile]
-                if pileToTake then
-                    if #pileToTake>0 then
-                        cardonhand = {cardpile[pile][#cardpile[pile]]}              
-                        table.remove(pileToTake,#pileToTake)
-                        if #cardpile[pile]==0 then cardpile[pile] = nil end
-                        cardonhand.lastlist="pile"..pile
+    if button == 1 then 
+        if inStats==false and inStore==false then
+            if cardonhand==nil then
+                local card,list,index = checkCollision(x,y)
+                local pile = checkPile(x,y)
+                if card then
+                    cardonhand=card
+                    cardonhand.lastlist=list
+                    for i=index,index+#card-1 do
+                        cardlists[list][i]=nil
                     end
-                end
-            else
-                if checkStack(x,y) then
-                    if #cardstacks>0 then
-                        local card = cardstacks[#cardstacks]
-                        cardlitter[#cardlitter+1] = card
-                        table.remove(cardstacks,#cardstacks)
-                    else
-                        cardstacks = invertTable(cardlitter)
-                        cardlitter = {}
+                elseif pile then
+                    local pileToTake = cardpile[pile]
+                    if pileToTake then
+                        if #pileToTake>0 then
+                            cardonhand = {cardpile[pile][#cardpile[pile]]}              
+                            table.remove(pileToTake,#pileToTake)
+                            if #cardpile[pile]==0 then cardpile[pile] = nil end
+                            cardonhand.lastlist="pile"..pile
+                        end
                     end
                 else
-                    local card = checkLitter(x,y)                    
-                    if card then
-                        cardonhand=card
-                        cardonhand.lastlist="litter"
-                        table.remove(cardlitter,#cardlitter)
+                    if checkStack(x,y) then
+                        if #cardstacks>0 then
+                            local card = cardstacks[#cardstacks]
+                            cardlitter[#cardlitter+1] = card
+                            table.remove(cardstacks,#cardstacks)
+                        else
+                            cardstacks = invertTable(cardlitter)
+                            cardlitter = {}
+                        end
+                    else
+                        local card = checkLitter(x,y)                    
+                        if card then
+                            cardonhand=card
+                            cardonhand.lastlist="litter"
+                            table.remove(cardlitter,#cardlitter)
+                        end
                     end
                 end
+                local button = checkForButtons(x,y)
+                if button then
+                    pressButton(button)
+                end
             end
-            local button = checkForButtons(x,y)
-            if button then
-                pressButton(button)
-            end
+        elseif inStore then
+
+        elseif inStats then
+
         end
     end
  end
@@ -261,6 +282,9 @@ function love.draw()
 
     --draw buttons
     drawButtons()
+
+    if inStore then drawStore() end
+    if inStats then drawStats() end
 end
 
 function drawButtons()
@@ -306,19 +330,25 @@ function drawButtons()
 end
 
 function drawCard(number,suit,x,y)
-    local colortext = {0,0,0}
-    local colorsuit = {1,1,1}
+    local colortext = cardStyle.textcolor
+    local colorsuit = cardStyle.suitcolor
     if suit=="diamonds" or suit=="hearts" then
-        colortext={0.6,0,0}
-        colorsuit={1,0,0}
+        colortext=cardStyle.casered
+        colorsuit=cardStyle.casered
     end
     love.graphics.setColor(0,0,0)
     love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(cardColor)
-    love.graphics.rectangle("fill",x,y,cardw,cardh,round)    
+    love.graphics.setColor(cardStyle.color)
+    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
+    if cardStyle.backImg then
+        local imgw, imgh = cardStyle.backImg:getDimensions()
+        local scaleX = cardw/imgw
+        local scaleY = cardh/imgh
+        love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
+    end
     love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),cardfont,x+2,y)
-    love.graphics.printf(tostring(number),cardfont,x,y+cardh-cardfontsize-3,cardw-2,"right")
+    love.graphics.print(tostring(number),cardStyle.font,x+2,y)
+    love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
     love.graphics.setColor(colorsuit)
 
     local smallSuitSize = suitSize-(suitSize*0.6)
@@ -341,6 +371,29 @@ function drawBack(x,y)
     love.graphics.setColor(love.math.colorFromBytes(204, 204, 255))
     love.graphics.rectangle("fill",x,y,cardw,cardh,round)
     love.graphics.setColor(1,1,1)
+end
+
+function drawStore()
+    --grey the background out
+    love.graphics.setColor(0,0,0,0.8)
+    love.graphics.rectangle('fill',0,0,screenw,screenh)
+    --draw the base rectangle and its border
+    local oldThick = love.graphics.getLineWidth()
+    local width = screenw-(screenw/8)
+    local height = screenh-(screenh/3)
+    love.graphics.setLineWidth(7)
+    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
+    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setLineWidth(oldThick)
+    for k,v in ipairs(storeItems) do
+        storeDrawCard("K","hearts",screenw/2-width/2+k*(cardw),screenh/2-height/2+k*(cardh),v)
+        love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
+        love.graphics.rectangle("fill",screenw/2-width/2+k*(cardw),screenh/2-height/2+k*(cardh)+cardh+2,cardw,cardfontsize+6,15)
+        love.graphics.setColor(0,0,0)
+        love.graphics.printf(v.price,cardfont,screenw/2-width/2+k*(cardw),screenh/2-height/2+k*(cardh)+cardh+3,cardw,"center")
+    end
 end
 
 function addCardToList(listnumber,number,suit,visible)
@@ -547,7 +600,7 @@ function pressButton(btn)
     elseif btn==3 then --NEW
         startGame()
     elseif btn==4 then --STORE
-
+        storeButton()
     elseif btn==5 then --REDO
         getRedo()
     end
@@ -612,7 +665,7 @@ function getRedo()
         local to = splitted[1]
         local size = tonumber(splitted[3])
         local index = tonumber(splitted[4])
-        index =execMove(from,to,size,index,"redo")
+        index = execMove(from,to,size,index,"redo")
         lastMoves[#lastMoves+1] = from.."|"..to.."|"..size.."|"..index
         lastMovesIndex = #lastMoves+1
         table.remove(forwardMoves,#forwardMoves)
@@ -664,6 +717,10 @@ function execMove(from,to,size,index,operation)
     end
 end
 
+function storeButton()
+    inStore = not inStore
+end
+
 function split(str, sep)
     local result = {}
     local regex = ("([^%s]+)"):format(sep)
@@ -671,4 +728,40 @@ function split(str, sep)
        table.insert(result, each)
     end
     return result
- end
+end
+
+function storeDrawCard(number,suit,x,y,cardStyle)
+    local colortext = cardStyle.textcolor
+    local colorsuit = cardStyle.suitcolor
+    if suit=="diamonds" or suit=="hearts" then
+        colortext=cardStyle.casered
+        colorsuit=cardStyle.casered
+    end
+    love.graphics.setColor(0,0,0)
+    love.graphics.rectangle("line",x,y,cardw,cardh,round)
+    love.graphics.setColor(cardStyle.color)
+    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
+    if cardStyle.backImg then
+        local imgw, imgh = cardStyle.backImg:getDimensions()
+        local scaleX = cardw/imgw
+        local scaleY = cardh/imgh
+        love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
+    end
+    love.graphics.setColor(colortext)
+    love.graphics.print(tostring(number),cardStyle.font,x+2,y)
+    love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
+    love.graphics.setColor(colorsuit)
+
+    local smallSuitSize = suitSize-(suitSize*0.6)
+    local offset = cardfont:getWidth(number)
+    local lineheight = cardfontsize
+    love.graphics.draw(suits,naipes[suit],x+2+offset+2,y+((119*smallSuitSize)/2)-lineheight/2+lineheight/6,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
+
+    local insideSuitSize = suitSize
+    if suit=="spades" and number=="A" then
+        insideSuitSize=insideSuitSize+0.20
+        y=y-5
+    end
+    love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
+    love.graphics.setColor(1,1,1)
+end
