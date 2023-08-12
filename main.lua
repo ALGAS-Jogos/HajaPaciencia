@@ -16,7 +16,7 @@ naipes = {spades=spades,diamonds=diamonds,clubs=clubs,hearts=hearts}
 suitSize = 0.45
 cardfontsize = 24
 round = 7
-cardfont = love.graphics.newFont(cardfontsize)
+cardfont = love.graphics.newFont("fonts/Outfit.ttf",cardfontsize)
 cardw,cardh = 100,150
 androidSpacing = 100
 androidInterSpacing = 10
@@ -41,16 +41,16 @@ inStore = false
 inStats = false
 
 storeItems = {
-    {color={0.925,0.843,0.98},textcolor={0.224,0,0.369},suitcolor={0.224,0,0.369},casered={0.988,0.176,0.678},font=cardfont,backImg=nil,price=500,bought=false}
+    {color={0.925,0.843,0.98},textcolor={0.224,0,0.369},suitcolor={0.224,0,0.369},casered={0.988,0.176,0.678},font="fonts/Caprasimo.ttf",backImg=nil,price=500,bought=false}
 }
 
 cardStyle = {
     color={1,1,1},
-    textcolor={0.2,0.2,0.2},
-    suitcolor={0.2,0.2,0.2},
-    casered={1,0.2,0.2},
-    backImg=love.graphics.newImage("test2.jpg"),
-    font=cardfont
+    textcolor={0,0,0},
+    suitcolor={0,0,0},
+    casered={0.6,0,0},
+    backImg=nil,--love.graphics.newImage("test2.jpg"),
+    font="fonts/Bricolage.ttf"
 }
 
 love.graphics.setBackgroundColor(0.2,0.05,0.2)
@@ -86,6 +86,7 @@ function love.load()
         end
         screenw, screenh = love.graphics.getDimensions()
     end
+    resetAllFonts()
     startGame()
 end
 
@@ -352,9 +353,9 @@ function drawCard(number,suit,x,y)
     love.graphics.setColor(colorsuit)
 
     local smallSuitSize = suitSize-(suitSize*0.6)
-    local offset = cardfont:getWidth(number)
+    local offset = 95*smallSuitSize
     local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+2+offset+2,y+((119*smallSuitSize)/2)-lineheight/2+lineheight/6,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
+    love.graphics.draw(suits,naipes[suit],x+cardw-offset-5,y+((119*smallSuitSize)/2)-lineheight/2+lineheight/6,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
 
     local insideSuitSize = suitSize
     if suit=="spades" and number=="A" then
@@ -764,4 +765,11 @@ function storeDrawCard(number,suit,x,y,cardStyle)
     end
     love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
     love.graphics.setColor(1,1,1)
+end
+
+function resetAllFonts()
+    cardStyle.font = love.graphics.newFont(cardStyle.font,cardfontsize)
+    for k,v in ipairs(storeItems) do
+        v.font = love.graphics.newFont(v.font,cardfontsize)
+    end
 end
