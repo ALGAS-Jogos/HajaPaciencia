@@ -14,7 +14,7 @@ clubs = love.graphics.newQuad(220,0,90,119,420,119)
 hearts = love.graphics.newQuad(330,0,90,119,420,119)
 naipes = {spades=spades,diamonds=diamonds,clubs=clubs,hearts=hearts}
 suitSize = 0.45
-cardfontsize = 24
+cardfontsize = 32
 round = 7
 cardfont = love.graphics.newFont("fonts/Outfit.ttf",cardfontsize)
 cardw,cardh = 100,150
@@ -73,7 +73,7 @@ function love.load()
         androidOverhead=50
         androidSmall=0.03
         androidInterSpacing=5
-        cardfontsize=cardfontsize/2
+        cardfontsize=math.floor(cardfontsize/1.5)
         cardfont=love.graphics.newFont(cardfontsize)
         love.window.maximize()
         love.window.setFullscreen(true)
@@ -265,6 +265,7 @@ function love.draw()
         local tempx = (5+i) * (cardw+androidInterSpacing) - androidSpacing
         local x = tempx - i*cardw*0.75 - (100-androidSpacing)
         local y = cardh-cardh+cardfontsize+5 + androidOverhead
+        if system=="Android" then x=x+screenw/10 end
         if cardlitter[#cardlitter-max+i] then
             local card = cardlitter[#cardlitter-max+i]
             drawCard(card.number,card.suit,x,y)
@@ -276,7 +277,7 @@ function love.draw()
     if cardonhand then
         for i,v in ipairs(cardonhand) do
             local x = mousex-cardw/2
-            local y = mousey-cardh/2 + i * (cardh-cardh+cardfontsize+5+androidOverhead)
+            local y = mousey-cardh/2 + i * (cardh-cardh+cardfontsize+5)
             drawCard(v.number,v.suit,x,y)
         end
     end
@@ -348,14 +349,15 @@ function drawCard(number,suit,x,y)
         love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
     end
     love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),cardStyle.font,x+2,y)
+    love.graphics.print(tostring(number),cardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
     love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
     love.graphics.setColor(colorsuit)
 
     local smallSuitSize = suitSize-(suitSize*0.6)
+    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
     local offset = 95*smallSuitSize
     local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+cardw-offset-5,y+((119*smallSuitSize)/2)-lineheight/2+lineheight/6,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
+    love.graphics.draw(suits,naipes[suit],x+cardw-offset-5,y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
 
     local insideSuitSize = suitSize
     if suit=="spades" and number=="A" then
@@ -483,6 +485,7 @@ function checkLitter(mx,my)
         local tempx = (5+i) * (cardw+androidInterSpacing) - androidSpacing
         local x = tempx - i*cardw*0.75 - (100-androidSpacing)
         local y = cardh-cardh+cardfontsize+5 + androidOverhead
+        if system=="Android" then x=x+screenw/10 end
         if cardlitter[#cardlitter-max+i] then
             local card = cardlitter[#cardlitter-max+i]
             if i==max then
@@ -611,7 +614,7 @@ function returnCard()
     if cardonhand.lastlist=="litter" then
         cardlitter[#cardlitter+1]=cardonhand[1]
     elseif string.match(cardonhand.lastlist,"pile") then
-        local pile = tonumber(string.sub(cardonhand.lastlist,5))
+        local pile = tonumber(string.sub(cardonhand.lastlist,5)) or 1
         local actualPile = cardpile[pile]
         if actualPile then
             actualPile[#actualPile+1] = cardonhand[1]
