@@ -189,9 +189,17 @@ function love.mousepressed(x, y, button, istouch)
                             local card = cardstacks[#cardstacks]
                             cardlitter[#cardlitter+1] = card
                             table.remove(cardstacks,#cardstacks)
+                            local move = "stack"
+                            lastMoves[#lastMoves+1] = move
+                            lastMovesIndex = #lastMoves+1
+                            forwardMoves = {}
                         else
                             cardstacks = invertTable(cardlitter)
                             cardlitter = {}
+                            local move = "restack"
+                            lastMoves[#lastMoves+1] = move
+                            lastMovesIndex = #lastMoves+1
+                            forwardMoves = {}
                         end
                     else
                         local card = checkLitter(x,y)                    
@@ -357,7 +365,7 @@ function drawCard(number,suit,x,y)
     if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
     local offset = 95*smallSuitSize
     local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+cardw-offset-5,y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
+    love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
 
     local insideSuitSize = suitSize
     if suit=="spades" and number=="A" then
@@ -649,14 +657,25 @@ end
 function getUndo()
     if lastMovesIndex>1 then
         local undoObj = lastMoves[lastMovesIndex-1]
-        lastMovesIndex = lastMovesIndex - 1
-        local splitted = split(undoObj,"|")
-        local from = splitted[2]
-        local to = splitted[1]
-        local size = tonumber(splitted[3])
-        local index = tonumber(splitted[4])
-        index = execMove(from,to,size,index,"undo")
-        forwardMoves[#forwardMoves+1] = from.."|"..to.."|"..size.."|"..index
+        local move = ""
+        if undoObj=="stack" then
+            stackMove("backward")
+            move = "stack"
+        elseif undoObj=="restack" then
+            cardlitter=invertTable(cardstacks)
+            cardstacks={}
+            move = "restack"
+        else
+            lastMovesIndex = lastMovesIndex - 1
+            local splitted = split(undoObj,"|")
+            local from = splitted[2]
+            local to = splitted[1]
+            local size = tonumber(splitted[3])
+            local index = tonumber(splitted[4])
+            index = execMove(from,to,size,index,"undo")
+            move = from.."|"..to.."|"..size.."|"..index
+        end
+        forwardMoves[#forwardMoves+1] = move
         table.remove(lastMoves,lastMovesIndex)
     end
 end
@@ -664,13 +683,24 @@ end
 function getRedo()
     if #forwardMoves>0 then
         local redoObj = forwardMoves[#forwardMoves]
-        local splitted = split(redoObj,"|")
-        local from = splitted[2]
-        local to = splitted[1]
-        local size = tonumber(splitted[3])
-        local index = tonumber(splitted[4])
-        index = execMove(from,to,size,index,"redo")
-        lastMoves[#lastMoves+1] = from.."|"..to.."|"..size.."|"..index
+        local move = ""
+        if redoObj=="stack" then
+            stackMove("forward")
+            move = "stack"
+        elseif redoObj=="restack" then
+            cardstacks=invertTable(cardlitter)
+            cardlitter={}
+            move = "restack"
+        else
+            local splitted = split(redoObj,"|")
+            local from = splitted[2]
+            local to = splitted[1]
+            local size = tonumber(splitted[3])
+            local index = tonumber(splitted[4])
+            index = execMove(from,to,size,index,"redo")
+            move = from.."|"..to.."|"..size.."|"..index
+        end
+        lastMoves[#lastMoves+1] = move
         lastMovesIndex = #lastMoves+1
         table.remove(forwardMoves,#forwardMoves)
     end
@@ -718,6 +748,16 @@ function execMove(from,to,size,index,operation)
         end
         if cardlists[to][#cardlists[to]-size] and operation=="undo" then cardlists[to][#cardlists[to]-size].visible = false end
         return #cardlists[to]-size+1
+    end
+end
+
+function stackMove(where)
+    if where=="backward" then
+        cardstacks[#cardstacks+1] = cardlitter[#cardlitter]
+        table.remove(cardlitter,#cardlitter)
+    else
+        cardlitter[#cardlitter+1] = cardstacks[#cardstacks]
+        table.remove(cardstacks,#cardstacks)
     end
 end
 
