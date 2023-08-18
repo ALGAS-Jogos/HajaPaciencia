@@ -167,6 +167,7 @@ function love.mousepressed(x, y, button, istouch)
             if cardonhand==nil then
                 local card,list,index = checkCollision(x,y)
                 local pile = checkPile(x,y)
+                local cardx, cardy = 0,0
                 if card then
                     cardonhand=card
                     cardonhand.lastlist=list
