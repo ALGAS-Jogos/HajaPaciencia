@@ -167,10 +167,12 @@ function love.mousepressed(x, y, button, istouch)
             if cardonhand==nil then
                 local card,list,index = checkCollision(x,y)
                 local pile = checkPile(x,y)
-                local cardx, cardy = 0,0
                 if card then
                     cardonhand=card
                     cardonhand.lastlist=list
+                    cardx, cardy = whereClicked("list",list,index)
+                    cardonhand.cardx = cardx
+                    cardonhand.cardy = cardy
                     for i=index,index+#card-1 do
                         cardlists[list][i]=nil
                     end
@@ -178,10 +180,13 @@ function love.mousepressed(x, y, button, istouch)
                     local pileToTake = cardpile[pile]
                     if pileToTake then
                         if #pileToTake>0 then
+                            cardx, cardy = whereClicked("pile",pile)
                             cardonhand = {cardpile[pile][#cardpile[pile]]}              
                             table.remove(pileToTake,#pileToTake)
                             if #cardpile[pile]==0 then cardpile[pile] = nil end
                             cardonhand.lastlist="pile"..pile
+                            cardonhand.cardx = cardx
+                            cardonhand.cardy = cardy
                         end
                     end
                 else
@@ -205,8 +210,11 @@ function love.mousepressed(x, y, button, istouch)
                     else
                         local card = checkLitter(x,y)                    
                         if card then
+                            cardx, cardy = whereClicked("litter")
                             cardonhand=card
                             cardonhand.lastlist="litter"
+                            cardonhand.cardx = cardx
+                            cardonhand.cardy = cardy
                             table.remove(cardlitter,#cardlitter)
                         end
                     end
@@ -285,8 +293,8 @@ function love.draw()
     end
     if cardonhand then
         for i,v in ipairs(cardonhand) do
-            local x = mousex-cardw/2
-            local y = mousey-cardh/2 + i * (cardh-cardh+cardfontsize+5)
+            local x = mousex-cardonhand.cardx
+            local y = mousey-cardonhand.cardy + ((i-1)*(cardh-cardh+cardfontsize+5))
             drawCard(v.number,v.suit,x,y)
         end
     end
@@ -551,6 +559,29 @@ function checkIfPost(xnumber,ynumber)
         if v==ynumber then yi=i end
     end
     if xi>yi and xi<yi+2 then return true else return false end
+end
+
+function whereClicked(check, ...)
+    local mx, my = love.mouse.getPosition()
+    if check=="list" then
+        list, index = ...
+        local x = list * (cardw+androidInterSpacing) - androidSpacing
+        local y = index * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
+        return mx-x,my-y
+    elseif check=="pile" then
+        pile = ...
+        local x = pile * (cardw+androidInterSpacing) - androidSpacing
+        local y = cardh-cardh+cardfontsize+5 + androidOverhead
+        return mx-x,my-y
+    elseif check=="litter" then
+        local max = math.min(#cardlitter,3)
+        local tempx = (5+max) * (cardw+androidInterSpacing) - androidSpacing
+        local x = tempx - max*cardw*0.75 - (100-androidSpacing)
+        local y = cardh-cardh+cardfontsize+5 + androidOverhead
+        return mx-x, my-y
+    else
+        return 0,0
+    end
 end
 
 function startGame()
