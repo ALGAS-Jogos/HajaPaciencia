@@ -41,7 +41,8 @@ inStore = false
 inStats = false
 
 storeItems = {
-    {color={0.925,0.843,0.98},textcolor={0.224,0,0.369},suitcolor={0.224,0,0.369},casered={0.988,0.176,0.678},font="fonts/Caprasimo.ttf",backImg=nil,price=500,bought=false}
+    {color={0.925,0.843,0.98},textcolor={0.224,0,0.369},suitcolor={0.224,0,0.369},casered={0.988,0.176,0.678},font="fonts/Caprasimo.ttf",backImg=nil,price=500,bought=false},
+    {color={0.925,0.843,0.5},textcolor={0.224,0.224,0},suitcolor={0.224,0.224,0},casered={0,0.224,0.224},font="fonts/Dosis.ttf",backImg=nil,price=500,bought=false}
 }
 
 cardStyle = {
@@ -310,15 +311,7 @@ function drawButtons()
     --love.graphics.setColor(0,0,0,0.5)
     local androidFactor = 0.25
     if system=="Android" then androidFactor=0.15 end    
-    --local y = screenh-(128*androidFactor)-20
-    --love.graphics.rectangle("fill",0,y,screenw,screenh-y)
-    --love.graphics.setColor(1,1,1,1)
-    --for i=1,#buttons do
-    --    local index = #buttons-i+1
-    --    local btn = buttons[i]
-    --    local x = 
-    --    love.graphics.draw(btn.img,x,y+10,0,androidFactor)
-    --end
+
     local buttonWidth = 256*androidFactor -- Largura dos botões (ajuste conforme necessário)
     local buttonHeight = 256*androidFactor -- Altura dos botões (ajuste conforme necessário)
     local minPadding = 10 -- Espaçamento entre os botões (ajuste conforme necessário)
@@ -408,11 +401,13 @@ function drawStore()
     love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setLineWidth(oldThick)
     for k,v in ipairs(storeItems) do
-        storeDrawCard("K","hearts",screenw/2-width/2+k*(cardw),screenh/2-height/2+k*(cardh),v)
+        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
+        local y = screenh/2-height/2 + height/10
+        storeDrawCard("K","hearts",x,y,v)
         love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
-        love.graphics.rectangle("fill",screenw/2-width/2+k*(cardw),screenh/2-height/2+k*(cardh)+cardh+2,cardw,cardfontsize+6,15)
-        love.graphics.setColor(0,0,0)
-        love.graphics.printf(v.price,cardfont,screenw/2-width/2+k*(cardw),screenh/2-height/2+k*(cardh)+cardh+3,cardw,"center")
+        love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,15)
+        love.graphics.setColor(0,0,0,1)
+        love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
     end
 end
 
@@ -824,14 +819,15 @@ function storeDrawCard(number,suit,x,y,cardStyle)
         love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
     end
     love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),cardStyle.font,x+2,y)
+    love.graphics.print(tostring(number),cardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
     love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
     love.graphics.setColor(colorsuit)
 
     local smallSuitSize = suitSize-(suitSize*0.6)
-    local offset = cardfont:getWidth(number)
+    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
+    local offset = 95*smallSuitSize
     local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+2+offset+2,y+((119*smallSuitSize)/2)-lineheight/2+lineheight/6,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
+    love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
 
     local insideSuitSize = suitSize
     if suit=="spades" and number=="A" then
