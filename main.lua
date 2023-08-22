@@ -62,9 +62,6 @@ cardStyle = {
 
 backgroundImg = love.graphics.newImage("backgrounds/back1.jpg")
 backNow = 1
-back1 = love.graphics.newImage("backgrounds/back1.jpg")
-back2 = love.graphics.newImage("backgrounds/back2.jpg")
-back3 = love.graphics.newImage("backgrounds/back3.jpg")
 
 cardBack = love.graphics.newImage("cards/back1.png")
 
@@ -903,13 +900,7 @@ end
 
 function changeBack()
     local newBack = backNow+1
-    if newBack==4 then newBack=1 end
-    if newBack==1 then
-        backgroundImg=back1        
-    elseif newBack==2 then
-        backgroundImg=back2
-    else
-        backgroundImg=back3
-    end
+    if newBack==8 then newBack=1 end
+    backgroundImg=love.graphics.newImage("backgrounds/back"..newBack..".jpg")
     backNow=newBack
 end
