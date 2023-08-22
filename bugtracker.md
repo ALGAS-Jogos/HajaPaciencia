@@ -1,1 +1,0 @@
-- as vezes as cartas somem quando retornando para a lista original: acontece qnd tem multiplas cartas e acontece qnd ta chegando perto do fim das cartas

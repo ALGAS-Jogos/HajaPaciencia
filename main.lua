@@ -1,3 +1,6 @@
+love.graphics.setDefaultFilter("linear","linear",10)
+
+require("utils.json")
 
 ordem = {"K","Q","J",10,9,8,7,6,5,4,3,2,"A"}
 cnaipes = {"spades","diamonds","clubs","hearts"}
@@ -16,12 +19,15 @@ naipes = {spades=spades,diamonds=diamonds,clubs=clubs,hearts=hearts}
 suitSize = 0.45
 cardfontsize = 32
 round = 7
-cardfont = love.graphics.newFont("fonts/Outfit.ttf",cardfontsize)
+cardfont = love.graphics.newFont(cardfontsize)
 cardw,cardh = 100,150
 androidSpacing = 100
 androidInterSpacing = 10
 androidOverhead = 0
 androidSmall = 0.1
+
+coins = 500
+coinImg = love.graphics.newImage("img/coin.png")
 
 buttons = {
     {img=love.graphics.newImage("img/undo.png")},
@@ -54,14 +60,25 @@ cardStyle = {
     font="fonts/Bricolage.ttf"
 }
 
+backgroundImg = love.graphics.newImage("backgrounds/back1.jpg")
+backNow = 1
+back1 = love.graphics.newImage("backgrounds/back1.jpg")
+back2 = love.graphics.newImage("backgrounds/back2.jpg")
+back3 = love.graphics.newImage("backgrounds/back3.jpg")
+
+cardBack = love.graphics.newImage("cards/back1.png")
+
 love.graphics.setBackgroundColor(0.2,0.05,0.2)
 
 love.math.setRandomSeed(os.time())
 random = love.math.random
 
 function love.load()
-    --cardlists[#cardlists+1] = {{number="2",suit="diamonds"},{number="A",suit="spades"}}
-    --cardlists[#cardlists+1] = {{number="K",suit="clubs"},{number="Q",suit="hearts"}}
+    --This will put all the store items in a file
+    --local fw = io.open("store/items.json","w")
+    --fw:write(json.encode(storeItems))
+    --fw:close("exit")
+    
     if system~="Android" then
         love.window.setMode(800,600)
         screenw, screenh = love.graphics.getDimensions()
@@ -76,13 +93,14 @@ function love.load()
         androidInterSpacing=5
         cardfontsize=math.floor(cardfontsize/1.5)
         cardfont=love.graphics.newFont(cardfontsize)
-        love.window.maximize()
-        love.window.setFullscreen(true)
+        --love.window.maximize()
+        --love.window.setFullscreen(true)
         local wait=0
         while wait<750 do
             wait=wait+1
             love.timer.sleep(0.01)
-            love.window.setFullscreen(true)
+            --love.window.setFullscreen(true)
+            love.window.maximize()
             love.graphics.getDimensions()
         end
         screenw, screenh = love.graphics.getDimensions()
@@ -226,7 +244,16 @@ function love.mousepressed(x, y, button, istouch)
                 end
             end
         elseif inStore then
+            local whatButton = storeCollision(x,y)
+            if whatButton=="backs" then
+                
+            elseif whatButton=="cardbacks" then
 
+            elseif whatButton=="cards" then
+
+            else
+
+            end
         elseif inStats then
 
         end
@@ -235,6 +262,13 @@ function love.mousepressed(x, y, button, istouch)
 
 function love.draw()
     local mousex, mousey = love.mouse.getPosition()
+
+    local scaleBackX, scaleBackY = backgroundImg:getDimensions()
+    scaleBackX = screenw/scaleBackX
+    scaleBackY = screenh/scaleBackY
+    love.graphics.draw(backgroundImg,0,0,0,scaleBackX,scaleBackY)
+
+
     for i=1,7 do -- drawing the bottom of the lists
         local x = i * (cardw+androidInterSpacing) - androidSpacing
         local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
@@ -364,7 +398,7 @@ function drawCard(number,suit,x,y)
     love.graphics.setColor(colorsuit)
 
     local smallSuitSize = suitSize-(suitSize*0.6)
-    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
+    if system=="Android" then smallSuitSize=smallSuitSize+0.01 end
     local offset = 95*smallSuitSize
     local lineheight = cardfontsize
     love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
@@ -381,9 +415,20 @@ end
 function drawBack(x,y)
     love.graphics.setColor(0,0,0)
     love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(love.math.colorFromBytes(204, 204, 255))
-    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
     love.graphics.setColor(1,1,1)
+    GLOBALBACKX, GLOBALBACKY = x,y
+    love.graphics.stencil(stencilRounded)
+    love.graphics.setStencilTest("greater",0)
+    local scaleX,scaleY = cardBack:getDimensions()
+    scaleX=cardw/scaleX
+    scaleY=cardh/scaleY
+    love.graphics.draw(cardBack,x,y,0,scaleX,scaleY)
+    love.graphics.setStencilTest()
+    love.graphics.setColor(1,1,1)
+end
+
+function stencilRounded()
+    love.graphics.rectangle("fill",GLOBALBACKX,GLOBALBACKY,cardw,cardh,round)
 end
 
 function drawStore()
@@ -409,6 +454,16 @@ function drawStore()
         love.graphics.setColor(0,0,0,1)
         love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
     end
+    love.graphics.setColor(0,0,0,0.7)
+    local dockw,dockh = width/1.5, 50
+    local dockx,docky = screenw/2-dockw/2, screenh/2-height/2+height-dockh-15
+    love.graphics.rectangle("fill",dockx,docky,dockw,dockh,10)
+    local imgw, imgh = coinImg:getDimensions()
+    local scale = (dockh-10)/imgh
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.draw(coinImg, dockx+5, docky+5, 0, scale)
+    love.graphics.print(tostring(coins),cardfont,dockx+(imgw*scale)+5,docky+5)
+
 end
 
 function addCardToList(listnumber,number,suit,visible)
@@ -573,6 +628,7 @@ function whereClicked(check, ...)
         local tempx = (5+max) * (cardw+androidInterSpacing) - androidSpacing
         local x = tempx - max*cardw*0.75 - (100-androidSpacing)
         local y = cardh-cardh+cardfontsize+5 + androidOverhead
+        if system=="Android" then x=x+screenw/10 end
         return mx-x, my-y
     else
         return 0,0
@@ -635,7 +691,7 @@ function pressButton(btn)
     if btn==1 then --UNDO
         getUndo()
     elseif btn==2 then --STATS
-
+        changeBack()
     elseif btn==3 then --NEW
         startGame()
     elseif btn==4 then --STORE
@@ -843,4 +899,17 @@ function resetAllFonts()
     for k,v in ipairs(storeItems) do
         v.font = love.graphics.newFont(v.font,cardfontsize)
     end
+end
+
+function changeBack()
+    local newBack = backNow+1
+    if newBack==4 then newBack=1 end
+    if newBack==1 then
+        backgroundImg=back1        
+    elseif newBack==2 then
+        backgroundImg=back2
+    else
+        backgroundImg=back3
+    end
+    backNow=newBack
 end

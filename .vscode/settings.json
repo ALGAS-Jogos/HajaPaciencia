@@ -7,6 +7,8 @@
         "${3rd}/love2d/library"
     ],
     "Lua.diagnostics.disable": [
-        "lowercase-global"
+        "lowercase-global",
+        "param-type-mismatch",
+        "undefined-global"
     ]
 }
