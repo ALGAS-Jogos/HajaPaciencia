@@ -26,7 +26,6 @@ androidInterSpacing = 10
 androidOverhead = 0
 androidSmall = 0.1
 
-coins = 500
 coinImg = love.graphics.newImage("img/coin.png")
 
 buttons = {
@@ -44,11 +43,16 @@ forwardMoves = {}
 system = love.system.getOS()
 
 inStore = false
+inStorePrompt = nil
 inStats = false
 
-storeItems = {
-    {color={0.925,0.843,0.98},textcolor={0.224,0,0.369},suitcolor={0.224,0,0.369},casered={0.988,0.176,0.678},font="fonts/Caprasimo.ttf",backImg=nil,price=500,bought=false},
-    {color={0.925,0.843,0.5},textcolor={0.224,0.224,0},suitcolor={0.224,0.224,0},casered={0,0.224,0.224},font="fonts/Dosis.ttf",backImg=nil,price=500,bought=false}
+storeItems = {}
+
+save = {
+    coins=500,
+    highScore=0,
+    highTime="0:00",
+    totalTime="0:00"
 }
 
 cardStyle = {
@@ -56,7 +60,7 @@ cardStyle = {
     textcolor={0,0,0},
     suitcolor={0,0,0},
     casered={0.6,0,0},
-    backImg=nil,--love.graphics.newImage("test2.jpg"),
+    backImg=nil,
     font="fonts/Bricolage.ttf"
 }
 
@@ -75,9 +79,11 @@ function love.load()
     --local fw = io.open("store/items.json","w")
     --fw:write(json.encode(storeItems))
     --fw:close("exit")
+    loadStoreItems()
+    loadSave()
     
     if system~="Android" then
-        love.window.setMode(800,600)
+        love.window.setMode(800,750)
         screenw, screenh = love.graphics.getDimensions()
     else
         suitSize=suitSize/1.8
@@ -140,6 +146,7 @@ function love.update(dt)
                             makeVisible()
                             putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
                             cardonhand=nil
+                            checkVictory()
                         else
                             cardonhand = returnCard()
                         end
@@ -248,8 +255,8 @@ function love.mousepressed(x, y, button, istouch)
 
             elseif whatButton=="cards" then
 
-            else
-
+            elseif whatButton=="outside" then
+                inStore=false
             end
         elseif inStats then
 
@@ -395,7 +402,7 @@ function drawCard(number,suit,x,y)
     love.graphics.setColor(colorsuit)
 
     local smallSuitSize = suitSize-(suitSize*0.6)
-    if system=="Android" then smallSuitSize=smallSuitSize+0.01 end
+    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
     local offset = 95*smallSuitSize
     local lineheight = cardfontsize
     love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
@@ -403,6 +410,7 @@ function drawCard(number,suit,x,y)
     local insideSuitSize = suitSize
     if suit=="spades" and number=="A" then
         insideSuitSize=insideSuitSize+0.20
+        if system=="Android" then insideSuitSize=insideSuitSize-0.15 end
         y=y-5
     end
     love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
@@ -437,10 +445,10 @@ function drawStore()
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3)
     love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
     love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
+    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setLineWidth(oldThick)
     for k,v in ipairs(storeItems) do
         local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
@@ -457,9 +465,10 @@ function drawStore()
     love.graphics.rectangle("fill",dockx,docky,dockw,dockh,10)
     local imgw, imgh = coinImg:getDimensions()
     local scale = (dockh-10)/imgh
-    love.graphics.setColor(1,1,1,1)
+    love.graphics.setColor(0.7,0.7,0.2,1)
     love.graphics.draw(coinImg, dockx+5, docky+5, 0, scale)
-    love.graphics.print(tostring(coins),cardfont,dockx+(imgw*scale)+5,docky+5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.print(tostring(save.coins),cardfont,dockx+(imgw*scale)+5,docky+5)
 
 end
 
@@ -589,6 +598,26 @@ function checkForButtons(mx,my)
                 return i
             end
         end
+end
+
+function storeCollision(mx,my)
+    local width = screenw-(screenw/8)
+    local height = screenh-(screenh/3)
+    for k,v in ipairs(storeItems) do
+        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
+        local y = screenh/2-height/2 + height/10
+        if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
+            inStorePrompt = v
+            return "card"
+        end
+    end
+    local x = screenw/2-width/2
+    local y = screenh/2-height/2
+    if mx >= x and mx <= x+width and my >= y and my <= y+height then 
+    else
+        return "outside"
+    end
+    
 end
 
 function checkOpposite(suitx,suity)
@@ -903,4 +932,58 @@ function changeBack()
     if newBack==8 then newBack=1 end
     backgroundImg=love.graphics.newImage("backgrounds/back"..newBack..".jpg")
     backNow=newBack
+end
+
+--Loads the store items from the store/items.json file
+function loadStoreItems()
+    local obj = {}
+    local result = {}
+    obj = linesFrom("store/items.json")
+    for i,v in ipairs(obj) do
+        result[#result+1] = json.decode(v)
+    end
+    storeItems = result
+end
+
+--Loads the stats from the love filesystem saves
+function loadSave()
+    local obj = {}
+    if love.filesystem.getInfo("save.json") then
+        for line in love.filesystem.lines("save.json") do
+            obj[#obj+1] = json.decode(line)
+        end
+        save = obj
+    else
+        love.filesystem.newFile("save.json")
+    end
+end
+
+-- see if the file exists
+function file_exists(file)
+    local f = io.open(file, "rb")
+    if f then f:close() end
+    return f ~= nil
+end
+  
+-- get all lines from a file, returns an empty 
+-- list/table if the file does not exist
+function linesFrom(file)
+    if not file_exists(file) then return {} end
+    local lines = {}
+    for line in io.lines(file) do 
+        lines[#lines + 1] = line
+    end
+    return lines
+end
+
+--Checks all the piles for Kings in their last positions
+function checkVictory()
+    local comply = 0
+    for k,v in ipairs(cardpile) do
+        if v[#v].number == "K" then comply=comply+1 end
+    end
+    if comply==4 then
+        print("YOU WON!!!!")
+        love.event.quit()
+    end
 end
