@@ -173,6 +173,8 @@ function love.update(dt)
                         makeVisible()
                         putLastMove(cardonhand.lastlist,baselist,#cardonhand,1)
                         cardonhand=nil
+                    else
+                        cardonhand = returnCard()
                     end
                 else
                     cardonhand = returnCard()
@@ -835,7 +837,6 @@ function execMove(from,to,size,index,operation)
         for i=index,#cardlists[from] do
             table.remove(cardlists[from],index)
         end
-        print(#card)
         if cardlists[from][#cardlists[from]] then cardlists[from][#cardlists[from]].visible=true end 
     end
 
@@ -852,7 +853,6 @@ function execMove(from,to,size,index,operation)
     else
         to = tonumber(to)
         for i=1,#card do
-            print(card[i] or "FUCK YOU!!!", i)
             cardlists[to][#cardlists[to]+1] = card[i]
         end
         if cardlists[to][#cardlists[to]-size] and operation=="undo" then cardlists[to][#cardlists[to]-size].visible = false end
