@@ -52,8 +52,14 @@ save = {
     coins=500,
     highScore=0,
     highTime="0:00",
-    totalTime="0:00"
+    totalTime="0:00",
+    points=0,
+    currentTime="0:00"
 }
+
+currentSecs = 0
+currentMins = 0
+currentCD = 0
 
 cardStyle = {
     color={1,1,1},
@@ -98,13 +104,14 @@ function love.load()
         cardfont=love.graphics.newFont(cardfontsize)
         --love.window.maximize()
         --love.window.setFullscreen(true)
-        local wait=0
-        while wait<750 do
-            wait=wait+1
-            love.timer.sleep(0.01)
+        local wait=true
+        while wait do
+
+            --love.timer.sleep(0.01)
             --love.window.setFullscreen(true)
             love.window.maximize()
-            love.graphics.getDimensions()
+            local tx, ty = love.graphics.getDimensions()
+            if ty>tx then wait=false end
         end
         screenw, screenh = love.graphics.getDimensions()
     end
@@ -120,11 +127,8 @@ function love.update(dt)
         else
             local pile = checkPile(mousex,mousey)
             local baselist = checkForList(mousex,mousey)
-            local fconhand = cardonhand[1][1]
-            local nconhand = #cardonhand            
             local card,list,index = checkCollisionTwo(mousex,mousey)
-            
-            if card then          
+            if card then
                 if checkOpposite(card.suit,cardonhand[1].suit) and checkIfPost(cardonhand[1].number,card.number) then                    
                     local newIndex = index+1
                     for i,v in ipairs(cardonhand) do
@@ -134,6 +138,7 @@ function love.update(dt)
                     makeVisible()
                     putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex)
                     cardonhand=nil
+                    addPoints(2)
                 else
                     cardonhand = returnCard()                
                 end
@@ -147,6 +152,7 @@ function love.update(dt)
                             putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
                             cardonhand=nil
                             checkVictory()
+                            addPoints(15)
                         else
                             cardonhand = returnCard()
                         end
@@ -160,6 +166,7 @@ function love.update(dt)
                         makeVisible()
                         putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
                         cardonhand=nil
+                        addPoints(15)
                     else
                         cardonhand = returnCard()
                     end
@@ -183,6 +190,12 @@ function love.update(dt)
                 cardonhand = returnCard()
             end
         end
+    end
+
+    currentCD=currentCD+dt
+    if currentCD>=1 then
+        currentCD=currentCD-1
+        updateTime()
     end
 end
 
@@ -231,6 +244,7 @@ function love.mousepressed(x, y, button, istouch)
                             lastMoves[#lastMoves+1] = move
                             lastMovesIndex = #lastMoves+1
                             forwardMoves = {}
+                            deductPoints(100)
                         end
                     else
                         local card = checkLitter(x,y)                    
@@ -292,7 +306,7 @@ function love.draw()
     
     --drawing the bottom of the stack
     love.graphics.setColor(1,1,1,0.3)
-    love.graphics.rectangle("fill",7*(cardw+10)-100,cardh-cardh+cardfontsize+5+androidOverhead,cardw,cardh,round)
+    love.graphics.rectangle("fill",7 * (cardw+androidInterSpacing) - androidSpacing,cardh-cardh+cardfontsize+5+androidOverhead,cardw,cardh,round)
     love.graphics.setColor(1,1,1,1)
 
     for k,v in ipairs(cardlists) do
@@ -330,8 +344,9 @@ function love.draw()
         end
     end    
     if #cardstacks>0 then
-        drawBack(7*(cardw+10)-100,cardh-cardh+cardfontsize+5+androidOverhead)
+        drawBack(7 * (cardw+androidInterSpacing) - androidSpacing,cardh-cardh+cardfontsize+5+androidOverhead)
     end
+
     if cardonhand then
         for i,v in ipairs(cardonhand) do
             local x = mousex-cardonhand.cardx
@@ -340,11 +355,34 @@ function love.draw()
         end
     end
 
+    --draw points :D
+    drawPoints()
+
+    --draw time :D
+    drawTime()
+
     --draw buttons
     drawButtons()
 
     if inStore then drawStore() end
     if inStats then drawStats() end
+end
+
+function drawTime()
+    local text = "Tempo: "..save.currentTime
+    love.graphics.setColor(0,0,0,0.5)
+    love.graphics.rectangle("fill",screenw-cardfont:getWidth(text)-10,-5,cardfont:getWidth(text)+15,cardfontsize+7,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.print(text,cardfont,screenw-cardfont:getWidth(text)-5,0)
+end
+
+function drawPoints()
+    local text = "Pontos: "..save.points
+    love.graphics.setColor(0,0,0,0.5)
+    love.graphics.rectangle("fill",-5,-5,cardfont:getWidth(text)+7,cardfontsize+7,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.print(text,cardfont,0,0)
+    
 end
 
 function drawButtons()
@@ -772,10 +810,12 @@ function getUndo()
         if undoObj=="stack" then
             stackMove("backward")
             move = "stack"
+            lastMovesIndex = lastMovesIndex - 1
         elseif undoObj=="restack" then
             cardlitter=invertTable(cardstacks)
             cardstacks={}
             move = "restack"
+            lastMovesIndex = lastMovesIndex - 1
         else
             lastMovesIndex = lastMovesIndex - 1
             local splitted = split(undoObj,"|")
@@ -985,5 +1025,26 @@ function checkVictory()
     if comply==4 then
         print("YOU WON!!!!")
         love.event.quit()
+    end
+end
+
+function deductPoints(num)
+    save.points=math.max(0,save.points-num)
+end
+
+function addPoints(num)
+    save.points=save.points+num
+end
+
+function updateTime()
+    currentSecs=currentSecs+1
+    if currentSecs>59 then
+        currentSecs=0
+        currentMins=currentMins+1
+    end
+    if currentSecs>9 then
+        save.currentTime=currentMins..":"..currentSecs
+    else
+        save.currentTime=currentMins..":0"..currentSecs
     end
 end
