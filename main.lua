@@ -733,23 +733,14 @@ end
 
 function startGame()
     resetCards()
-    leftToAdd = allCards()
-    for column=1,7 do
-        for row=1,column do
-            local cardID = random(1,#leftToAdd)
-            local card = leftToAdd[cardID]
-            local isVisible = false
-            if row==column then isVisible=true end
-            addCardToList(column,card.number,card.suit,isVisible)
-            table.remove(leftToAdd,cardID)
-        end
-    end
-    for i=1,#leftToAdd do
-        local cardID = random(1,#leftToAdd)
-        local card = leftToAdd[cardID]
-        cardstacks[#cardstacks+1] = card
-        table.remove(leftToAdd,cardID)
-    end
+    --badWay()
+    addCards()
+    save.points=0
+    save.currentTime="0:00"
+    currentSecs=0
+    currentMins=0
+    currentCD=0
+    timePunish=0
 end
 
 function resetCards()
@@ -766,9 +757,9 @@ end
 
 function allCards()
     local obj = {}
-    for i=1,#ordem do
-        for j=1,#cnaipes do
-            obj[#obj+1] = {number=ordem[i],suit=cnaipes[j]}
+    for i=1,#cnaipes do
+        for j=1,#ordem do
+            obj[#obj+1] = {number=ordem[#ordem-j+1],suit=cnaipes[i]}
         end
     end
     return obj
@@ -1077,5 +1068,46 @@ function updateTime()
         save.currentTime=currentMins..":"..currentSecs
     else
         save.currentTime=currentMins..":0"..currentSecs
+    end
+end
+
+function addCards()
+    local cards = allCards()
+    local limit = 28
+    for i=1,#cards do
+        local toWhere = random(1,100)
+        local card = cards[i]
+        if toWhere<=50 and i==#cards-limit then toWhere=100 end
+        if limit==0 then toWhere=1 end
+        if toWhere>50 and limit>0 then
+            local trying = true
+            local column = random(1,7)
+            while trying do
+                column = random(1,7)
+                if cardlists[column] then
+                    if #cardlists[column]<column then trying=false end
+                else
+                    trying=false
+                end
+            end
+            local isVisible=false
+            addCardToList(column,card.number,card.suit,isVisible)
+            limit=limit-1
+        else
+            cardstacks[#cardstacks+1] = card
+        end
+    end
+
+    --shuffle the stacks
+    local obj = cardstacks
+    cardstacks={}
+    for i=1,#obj do
+        local cardID = random(1,#obj)
+        cardstacks[#cardstacks+1] = obj[cardID]
+        table.remove(obj,cardID)
+    end
+
+    for i=1,7 do
+        cardlists[i][#cardlists[i]].visible=true
     end
 end
