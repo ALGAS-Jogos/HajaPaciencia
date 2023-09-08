@@ -1074,7 +1074,7 @@ end
 function addCards()
     local cards = allCards()
     local limit = 28
-    local hardSetting = 25
+    local hardSetting = 75
     for i=1,#cards do
         local toWhere = random(1,100)
         local card = cards[i]
