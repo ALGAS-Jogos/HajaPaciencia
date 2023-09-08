@@ -42,6 +42,8 @@ forwardMoves = {}
 
 system = love.system.getOS()
 
+oldThick = love.graphics.getLineWidth()
+
 inStore = false
 inStorePrompt = nil
 inStats = false
@@ -60,6 +62,7 @@ save = {
 currentSecs = 0
 currentMins = 0
 currentCD = 0
+timePunish = 0
 
 cardStyle = {
     color={1,1,1},
@@ -193,9 +196,14 @@ function love.update(dt)
     end
 
     currentCD=currentCD+dt
+    timePunish=timePunish+dt
     if currentCD>=1 then
         currentCD=currentCD-1
         updateTime()
+    end
+    if timePunish>=10 then
+        timePunish=timePunish-10
+        deductPoints(2)
     end
 end
 
@@ -365,6 +373,7 @@ function love.draw()
     drawButtons()
 
     if inStore then drawStore() end
+    if inStorePrompt then drawStorePrompt() end
     if inStats then drawStats() end
 end
 
@@ -481,7 +490,6 @@ function drawStore()
     love.graphics.setColor(0,0,0,0.8)
     love.graphics.rectangle('fill',0,0,screenw,screenh)
     --draw the base rectangle and its border
-    local oldThick = love.graphics.getLineWidth()
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3)
     love.graphics.setLineWidth(7)
@@ -510,6 +518,28 @@ function drawStore()
     love.graphics.setColor(1,1,1,1)
     love.graphics.print(tostring(save.coins),cardfont,dockx+(imgw*scale)+5,docky+5)
 
+end
+
+function drawStorePrompt()
+    --grey the background out
+    love.graphics.setColor(0,0,0,0.3)
+    love.graphics.rectangle('fill',0,0,screenw,screenh)
+    --draw the base rectangle and its border
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/2)
+    love.graphics.setLineWidth(7)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
+    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setLineWidth(oldThick)
+    local naipesDraw = {"spades","hearts","clubs","diamonds"}
+    for k,v in ipairs(naipesDraw) do
+        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
+        local y = screenh/2-height/2 + height/10
+        storeDrawCard("A",v,x,y,inStorePrompt)
+    end
+    
 end
 
 function addCardToList(listnumber,number,suit,visible)
@@ -828,6 +858,7 @@ function getUndo()
         end
         forwardMoves[#forwardMoves+1] = move
         table.remove(lastMoves,lastMovesIndex)
+        deductPoints(10)
     end
 end
 
