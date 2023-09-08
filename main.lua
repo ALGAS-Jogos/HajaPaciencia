@@ -1074,12 +1074,13 @@ end
 function addCards()
     local cards = allCards()
     local limit = 28
+    local hardSetting = 25
     for i=1,#cards do
         local toWhere = random(1,100)
         local card = cards[i]
-        if toWhere<=50 and i==#cards-limit then toWhere=100 end
+        if toWhere<=hardSetting and i==#cards-limit then toWhere=100 end
         if limit==0 then toWhere=1 end
-        if toWhere>50 and limit>0 then
+        if toWhere>hardSetting and limit>0 then
             local trying = true
             local column = random(1,7)
             while trying do
