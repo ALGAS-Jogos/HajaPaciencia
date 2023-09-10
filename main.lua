@@ -535,8 +535,10 @@ function drawStorePrompt()
     love.graphics.setLineWidth(oldThick)
     local naipesDraw = {"spades","hearts","clubs","diamonds"}
     for k,v in ipairs(naipesDraw) do
-        local spacing = (width-cardw*4-10)/4
-        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing+spacing) + 10
+        local spacing = ((width-cardw*4))/4
+        local otherSpacing = ((screenw/2-width/2+(4)*(cardw+spacing))-width)/4
+        --if k>1 then otherSpacing=0 end
+        local x = screenw/2-width/2+(k-1)*(cardw+spacing) + otherSpacing
         local y = screenh/2-height/2 + height/10
         storeDrawCard("A",v,x,y,inStorePrompt)
     end
