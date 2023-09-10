@@ -535,7 +535,8 @@ function drawStorePrompt()
     love.graphics.setLineWidth(oldThick)
     local naipesDraw = {"spades","hearts","clubs","diamonds"}
     for k,v in ipairs(naipesDraw) do
-        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
+        local spacing = (width-cardw*4-10)/4
+        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing+spacing) + 10
         local y = screenh/2-height/2 + height/10
         storeDrawCard("A",v,x,y,inStorePrompt)
     end
@@ -1074,7 +1075,7 @@ end
 function addCards()
     local cards = allCards()
     local limit = 28
-    local hardSetting = 75
+    local hardSetting = 50
     for i=1,#cards do
         local toWhere = random(1,100)
         local card = cards[i]
