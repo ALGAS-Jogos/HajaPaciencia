@@ -542,6 +542,8 @@ function drawStorePrompt()
         local y = screenh/2-height/2 + height/10
         storeDrawCard("A",v,x,y,inStorePrompt)
     end
+    love.graphics.setColor(0,0,0,0.8)
+    love.graphics.rectangle("fill",screenw/2-150,screenh/2+height/2-75,300,50,5)
     
 end
 
