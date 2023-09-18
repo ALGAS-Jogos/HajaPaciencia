@@ -543,8 +543,11 @@ function drawStorePrompt()
         storeDrawCard("A",v,x,y,inStorePrompt)
     end
     love.graphics.setColor(0,0,0,0.8)
-    love.graphics.rectangle("fill",screenw/2-150,screenh/2+height/2-75,300,50,5)
-    
+    local x = screenw/2-150
+    local y = screenh/2+height/2-75
+    love.graphics.rectangle("fill",x,y,300,50,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.printf("Comprar",cardfont,x,y,300,"center")
 end
 
 function addCardToList(listnumber,number,suit,visible)
