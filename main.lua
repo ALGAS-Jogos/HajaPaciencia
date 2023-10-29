@@ -83,6 +83,11 @@ love.graphics.setBackgroundColor(0.2,0.05,0.2)
 love.math.setRandomSeed(os.time())
 random = love.math.random
 
+sounds = {
+    move = love.audio.newSource("sfx/move.mp3","static"),
+    new = love.audio.newSource("sfx/new.mp3","static")
+}
+
 function love.load()
     --This will put all the store items in a file
     --local fw = io.open("store/items.json","w")
@@ -142,6 +147,7 @@ function love.update(dt)
                     putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex)
                     cardonhand=nil
                     addPoints(2)
+                    playSound("move")
                 else
                     cardonhand = returnCard()                
                 end
@@ -156,6 +162,7 @@ function love.update(dt)
                             cardonhand=nil
                             checkVictory()
                             addPoints(15)
+                            playSound("move")
                         else
                             cardonhand = returnCard()
                         end
@@ -170,6 +177,7 @@ function love.update(dt)
                         putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
                         cardonhand=nil
                         addPoints(15)
+                        playSound("move")
                     else
                         cardonhand = returnCard()
                     end
@@ -183,6 +191,7 @@ function love.update(dt)
                         makeVisible()
                         putLastMove(cardonhand.lastlist,baselist,#cardonhand,1)
                         cardonhand=nil
+                        playSound("move")
                     else
                         cardonhand = returnCard()
                     end
@@ -254,6 +263,7 @@ function love.mousepressed(x, y, button, istouch)
                             forwardMoves = {}
                             deductPoints(100)
                         end
+                        playSound("move")
                     else
                         local card = checkLitter(x,y)                    
                         if card then
@@ -272,15 +282,29 @@ function love.mousepressed(x, y, button, istouch)
                 end
             end
         elseif inStore then
-            local whatButton = storeCollision(x,y)
-            if whatButton=="backs" then
-                
-            elseif whatButton=="cardbacks" then
+            if inStorePrompt==nil then
+                local whatButton = storeCollision(x,y)
+                if whatButton=="backs" then
 
-            elseif whatButton=="cards" then
+                elseif whatButton=="cardbacks" then
 
-            elseif whatButton=="outside" then
-                inStore=false
+                elseif whatButton=="cards" then
+
+                elseif whatButton=="outside" then
+                    inStore=false
+                end
+            else
+                local whatButton = storePromptCollision(x,y)
+                if whatButton=="buy" then
+                    if save.coins>=inStorePrompt.price then
+                        cardStyle=inStorePrompt
+                        storeItems[inStorePrompt.index].bought = true
+                        inStorePrompt=nil
+                        inStore=false                        
+                    end
+                elseif whatButton=="outside" then
+                    inStorePrompt=nil
+                end
             end
         elseif inStats then
 
@@ -505,7 +529,11 @@ function drawStore()
         love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
         love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,15)
         love.graphics.setColor(0,0,0,1)
-        love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+        if v.bought==false then
+            love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+        else
+            love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+        end
     end
     love.graphics.setColor(0,0,0,0.7)
     local dockw,dockh = width/1.5, 50
@@ -550,6 +578,7 @@ function drawStorePrompt()
     love.graphics.printf("Comprar",cardfont,x,y,300,"center")
 end
 
+--Adds a card at the bottom of a list
 function addCardToList(listnumber,number,suit,visible)
     local index=0
     if cardlists[listnumber] then
@@ -560,6 +589,8 @@ function addCardToList(listnumber,number,suit,visible)
     cardlists[listnumber][index+1] = {number=number,suit=suit,visible=visible}
 end
 
+--Collision for the lists
+--No cardonhand
 function checkCollision(mx,my)
     for k,v in ipairs(cardlists) do
         local x = k * (cardw+androidInterSpacing) - androidSpacing
@@ -584,13 +615,21 @@ function checkCollision(mx,my)
     return nil
 end
 
+--Separate collision for the card lists
+--with cardonhand
 function checkCollisionTwo(mx,my)
+    --calculate the cardonhand rectangle
+    local cx = mx-cardonhand.cardx
+    local cy = my-cardonhand.cardy-- + ((i-1)*(cardh-cardh+cardfontsize+5))
+    local cw = cardw
+    local ch = cardh
+
     for k,v in ipairs(cardlists) do
         local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
             local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
-            if i==#v then
-                if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+            if i==#v and checkOpposite(cardonhand[1].suit,card.suit) and checkIfPost(cardonhand[1].number,card.number) then
+                if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh then
                     return card,k,i
                 end
             end
@@ -599,27 +638,68 @@ function checkCollisionTwo(mx,my)
     return nil
 end
 
+--Collision on the list bottom (for kings)
 function checkForList(mx,my)
-    for i=1,7 do
-        local x = i * (cardw+androidInterSpacing) - androidSpacing
-        local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
-        if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
-            return i
+    if cardonhand~=nil then
+        --calculate the cardonhand rectangle
+        local cx = mx-cardonhand.cardx
+        local cy = my-cardonhand.cardy-- + ((i-1)*(cardh-cardh+cardfontsize+5))
+        local cw = cardw
+        local ch = cardh
+
+        for i=1,7 do
+            local x = i * (cardw+androidInterSpacing) - androidSpacing
+            local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
+            if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh and #cardlists[i]==0 then
+                return i
+            end
+        end
+    else
+        for i=1,7 do
+            local x = i * (cardw+androidInterSpacing) - androidSpacing
+            local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
+            if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+                return i
+            end
         end
     end
 end
 
+--Collision on the pile
 function checkPile(mx,my)
-    for i=1,4 do --drawing the bottom of the piles
-        local x = i * (cardw+androidInterSpacing) - androidSpacing
-        local y = cardh-cardh+cardfontsize+5 + androidOverhead
-        if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then            
-            return i
+    --calculate the cardonhand rectangle
+    if cardonhand~=nil then
+        local cx = mx-cardonhand.cardx
+        local cy = my-cardonhand.cardy-- + ((i-1)*(cardh-cardh+cardfontsize+5))
+        local cw = cardw
+        local ch = cardh
+
+        for i=1,4 do --drawing the bottom of the piles
+            local x = i * (cardw+androidInterSpacing) - androidSpacing
+            local y = cardh-cardh+cardfontsize+5 + androidOverhead
+            if cardpile[i]==nil then
+                if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh then
+                    return i
+                end
+            else
+                if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh and cardonhand[1].suit==cardpile[i][#cardpile[i]].suit then
+                    return i
+                end
+            end
+        end
+    else
+        for i=1,4 do --drawing the bottom of the piles
+            local x = i * (cardw+androidInterSpacing) - androidSpacing
+            local y = cardh-cardh+cardfontsize+5 + androidOverhead
+            if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+                return i
+            end
         end
     end
     return nil
 end
 
+--Collision on the stack
 function checkStack(mx,my)
     local x = 7*(cardw+10)-100
     local y = cardh-cardh+cardfontsize+5 + androidOverhead
@@ -629,6 +709,7 @@ function checkStack(mx,my)
     return false
 end
 
+--Collision on the litter
 function checkLitter(mx,my)
     local max=#cardlitter
     if max>3 then max=3 end    
@@ -649,6 +730,7 @@ function checkLitter(mx,my)
     return nil
 end
 
+--Collision of the main buttons
 function checkForButtons(mx,my)        
         local androidFactor = 0.25
         if system=="Android" then androidFactor=0.15 end    
@@ -678,6 +760,7 @@ function checkForButtons(mx,my)
         end
 end
 
+--Collision of the store
 function storeCollision(mx,my)
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3)
@@ -685,7 +768,13 @@ function storeCollision(mx,my)
         local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
         local y = screenh/2-height/2 + height/10
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
-            inStorePrompt = v
+            v["index"] = k
+            if v.bought then
+                cardStyle=v
+                inStore=false
+                return "card"
+            end
+            inStorePrompt=v
             return "card"
         end
     end
@@ -698,6 +787,24 @@ function storeCollision(mx,my)
     
 end
 
+--Collision of the storePrompt
+function storePromptCollision(mx,my)
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/2)
+    local x = screenw/2-150
+    local y = screenh/2+height/2-75
+    if mx >= x and mx <= x+width and my >= y and my <= y+height then
+        return "buy"
+    end
+    x = screenw/2-width/2
+    y = screenh/2-height/2
+    if mx >= x and mx <= x+width and my >= y and my <= y+height then 
+    else
+        return "outside"
+    end
+end
+
+--Checks if the suits are opposite colors
 function checkOpposite(suitx,suity)
     local xcolor = 0
     local ycolor = 0
@@ -706,6 +813,7 @@ function checkOpposite(suitx,suity)
     if xcolor~=ycolor then return true else return false end
 end
 
+--Checks if the xnumber is bigger than the ynumber in the solitaire order
 function checkIfPost(xnumber,ynumber)
     local xi,yi=0,0
     for i,v in ipairs(ordem) do
@@ -715,6 +823,8 @@ function checkIfPost(xnumber,ynumber)
     if xi>yi and xi<yi+2 then return true else return false end
 end
 
+--Determines where the mouse was in relation to the card being clicked, 
+--useful when drawing cardonhand
 function whereClicked(check, ...)
     local mx, my = love.mouse.getPosition()
     if check=="list" then
@@ -739,9 +849,9 @@ function whereClicked(check, ...)
     end
 end
 
+--A neat function to reset the game
 function startGame()
     resetCards()
-    --badWay()
     addCards()
     save.points=0
     save.currentTime="0:00"
@@ -751,6 +861,7 @@ function startGame()
     timePunish=0
 end
 
+--Wipes the board
 function resetCards()
     cardlists = {}
     cardlitter = {}
@@ -763,6 +874,7 @@ function resetCards()
     lastMovesIndex=1
 end
 
+--Helper function to get all the possible cards in a deck
 function allCards()
     local obj = {}
     for i=1,#cnaipes do
@@ -773,6 +885,7 @@ function allCards()
     return obj
 end
 
+--Helper function to invert a table (move this)
 function invertTable(list)
     local obj = {}
     for i=1,#list do
@@ -781,13 +894,14 @@ function invertTable(list)
     return obj
 end
 
-
+--A organizer function to handle button presses
 function pressButton(btn)
     if btn==1 then --UNDO
         getUndo()
     elseif btn==2 then --STATS
         changeBack()
     elseif btn==3 then --NEW
+        playSound("new")
         startGame()
     elseif btn==4 then --STORE
         storeButton()
@@ -796,6 +910,8 @@ function pressButton(btn)
     end
 end
 
+--Returns the cardonhand to where it used to be, 
+-- used when the cardonhand lands on a bad spot
 function returnCard()
     if cardonhand.lastlist=="litter" then
         cardlitter[#cardlitter+1]=cardonhand[1]
@@ -817,6 +933,7 @@ function returnCard()
     return nil
 end
 
+--Makes the last card of the last list of the cardonhand visible
 function makeVisible()
     if cardonhand.lastlist~="litter" and not string.match(cardonhand.lastlist,"pile") then
         if #cardlists[cardonhand.lastlist]>0 then
@@ -825,6 +942,7 @@ function makeVisible()
     end
 end
 
+--Saves the last move made on a table and resets the forwardMoves table
 function putLastMove(oldLocation,newLocation,size,index)
     local move = oldLocation.."|"..newLocation.."|"..size.."|"..index
     lastMoves[#lastMoves+1] = move
@@ -832,6 +950,7 @@ function putLastMove(oldLocation,newLocation,size,index)
     forwardMoves = {}
 end
 
+--Gets the undo and does the funky bits
 function getUndo()
     if lastMovesIndex>1 then
         local undoObj = lastMoves[lastMovesIndex-1]
@@ -861,6 +980,7 @@ function getUndo()
     end
 end
 
+--Gets the redo and does the funky bits
 function getRedo()
     if #forwardMoves>0 then
         local redoObj = forwardMoves[#forwardMoves]
@@ -887,6 +1007,7 @@ function getRedo()
     end
 end
 
+--Executes a move, used with Undo/Redo
 function execMove(from,to,size,index,operation)
     --get card
     local card = {}
@@ -930,6 +1051,7 @@ function execMove(from,to,size,index,operation)
     end
 end
 
+--Moves cards from or to the stack
 function stackMove(where)
     if where=="backward" then
         cardstacks[#cardstacks+1] = cardlitter[#cardlitter]
@@ -940,10 +1062,12 @@ function stackMove(where)
     end
 end
 
+--Inverts inStore
 function storeButton()
     inStore = not inStore
 end
 
+--Splits strings into a table of strings based on a separator char
 function split(str, sep)
     local result = {}
     local regex = ("([^%s]+)"):format(sep)
@@ -953,6 +1077,7 @@ function split(str, sep)
     return result
 end
 
+--Same as drawCard but it also takes a cardStyle input
 function storeDrawCard(number,suit,x,y,cardStyle)
     local colortext = cardStyle.textcolor
     local colorsuit = cardStyle.suitcolor
@@ -990,6 +1115,7 @@ function storeDrawCard(number,suit,x,y,cardStyle)
     love.graphics.setColor(1,1,1)
 end
 
+--Resets all fonts to a new font size
 function resetAllFonts()
     cardStyle.font = love.graphics.newFont(cardStyle.font,cardfontsize)
     for k,v in ipairs(storeItems) do
@@ -997,6 +1123,7 @@ function resetAllFonts()
     end
 end
 
+--Changes the background image (not complete, not taking input)
 function changeBack()
     local newBack = backNow+1
     if newBack==8 then newBack=1 end
@@ -1058,14 +1185,17 @@ function checkVictory()
     end
 end
 
+--Takes points away from player
 function deductPoints(num)
     save.points=math.max(0,save.points-num)
 end
 
+--Adds points to the player
 function addPoints(num)
     save.points=save.points+num
 end
 
+--Update the timer including the 0 in the seconds
 function updateTime()
     currentSecs=currentSecs+1
     if currentSecs>59 then
@@ -1079,6 +1209,7 @@ function updateTime()
     end
 end
 
+--Does all the funky stuff and shuffles the deck and sets a new board
 function addCards()
     local cards = allCards()
     local limit = 28
@@ -1119,4 +1250,9 @@ function addCards()
     for i=1,7 do
         cardlists[i][#cardlists[i]].visible=true
     end
+end
+
+function playSound(sfx)
+    local sound = sounds[sfx]:clone()
+    love.audio.play(sound)
 end
