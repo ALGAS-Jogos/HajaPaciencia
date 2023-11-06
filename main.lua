@@ -146,8 +146,8 @@ function love.update(dt)
                         v.visible=true
                         cardlists[list][index+i] = v
                     end
-                    makeVisible()
-                    putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex)
+                    local behindHidden = makeVisible()
+                    putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex,behindHidden)
                     cardonhand=nil
                     addPoints(2)
                     playSound("move")
@@ -158,10 +158,11 @@ function love.update(dt)
                 if cardpile[pile] then
                     local lastCardPile = cardpile[pile][#cardpile[pile]]
                     if lastCardPile then --checa se a ultima carta não é nula
-                        if cardonhand[1].suit==lastCardPile.suit and checkIfPost(lastCardPile.number,cardonhand[1].number) then
+                        if cardonhand[1].suit==lastCardPile.suit and checkIfPost(lastCardPile.number,cardonhand[1].number) and #cardonhand==1 then
                             cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
-                            makeVisible()
-                            putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
+                            
+                            local behindHidden = makeVisible()
+                            putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
                             cardonhand=nil
                             checkVictory()
                             addPoints(15)
@@ -176,8 +177,8 @@ function love.update(dt)
                     if cardonhand[1].number=="A" then
                         cardpile[pile] = {}
                         cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
-                        makeVisible()
-                        putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0)
+                        local behindHidden = makeVisible()
+                        putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
                         cardonhand=nil
                         addPoints(15)
                         playSound("move")
@@ -191,8 +192,8 @@ function love.update(dt)
                         for i,v in ipairs(cardonhand) do                        
                             addCardToList(baselist,v.number,v.suit,true)
                         end
-                        makeVisible()
-                        putLastMove(cardonhand.lastlist,baselist,#cardonhand,1)
+                        local behindHidden = makeVisible()
+                        putLastMove(cardonhand.lastlist,baselist,#cardonhand,1,behindHidden)
                         cardonhand=nil
                         playSound("move")
                     else
@@ -973,16 +974,19 @@ end
 
 --Makes the last card of the last list of the cardonhand visible
 function makeVisible()
+    local vis = true
     if cardonhand.lastlist~="litter" and not string.match(cardonhand.lastlist,"pile") then
         if #cardlists[cardonhand.lastlist]>0 then
+            vis = cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible
             cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
         end
     end
+    return vis
 end
 
 --Saves the last move made on a table and resets the forwardMoves table
-function putLastMove(oldLocation,newLocation,size,index)
-    local move = oldLocation.."|"..newLocation.."|"..size.."|"..index
+function putLastMove(oldLocation,newLocation,size,index,behindHidden)
+    local move = oldLocation.."|"..newLocation.."|"..size.."|"..index.."|"..tostring(behindHidden)
     lastMoves[#lastMoves+1] = move
     lastMovesIndex = #lastMoves+1
     forwardMoves = {}
@@ -1009,8 +1013,9 @@ function getUndo()
             local to = splitted[1]
             local size = tonumber(splitted[3])
             local index = tonumber(splitted[4])
-            index = execMove(from,to,size,index,"undo")
-            move = from.."|"..to.."|"..size.."|"..index
+            local behindHidden = splitted[5]
+            index = execMove(from,to,size,index,"undo",behindHidden)
+            move = from.."|"..to.."|"..size.."|"..index.."|"..tostring(behindHidden)
         end
         forwardMoves[#forwardMoves+1] = move
         table.remove(lastMoves,lastMovesIndex)
@@ -1046,7 +1051,7 @@ function getRedo()
 end
 
 --Executes a move, used with Undo/Redo
-function execMove(from,to,size,index,operation)
+function execMove(from,to,size,index,operation,behindHidden)
     --get card
     local card = {}
     if string.match(from,"pile") then
@@ -1084,7 +1089,8 @@ function execMove(from,to,size,index,operation)
         for i=1,#card do
             cardlists[to][#cardlists[to]+1] = card[i]
         end
-        if cardlists[to][#cardlists[to]-size] and operation=="undo" then cardlists[to][#cardlists[to]-size].visible = false end
+        print(behindHidden)
+        if cardlists[to][#cardlists[to]-size] and operation=="undo" and behindHidden=="false" then cardlists[to][#cardlists[to]-size].visible = false end
         return #cardlists[to]-size+1
     end
 end
@@ -1282,4 +1288,12 @@ end
 function playSound(sfx)
     local sound = sounds[sfx]:clone()
     love.audio.play(sound)
+end
+
+function getVisible()
+    if not cardlists[cardonhand.lastlist]==nil then
+        return cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible
+    else
+        return "true"
+    end
 end
