@@ -544,16 +544,18 @@ function drawStore()
             love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
         end
     end
-    love.graphics.setColor(0,0,0,0.7)
-    local dockw,dockh = width/1.5, 50
-    local dockx,docky = screenw/2-dockw/2, screenh/2-height/2+height-dockh-15
-    love.graphics.rectangle("fill",dockx,docky,dockw,dockh,10)
+    
+    --Dock render
+    love.graphics.setColor(0,0,0,0.8)
     local imgw, imgh = coinImg:getDimensions()
-    local scale = (dockh-10)/imgh
+    local scale = (height/8-10)/imgh
+    local dockw,dockh = cardfont:getWidth(tostring(save.coins))+(imgw*scale)+15,height/8
+    local dockx,docky = screenw/2-width/2+15, screenh/2-height/2+height-dockh-15
+    love.graphics.rectangle("fill",dockx,docky,dockw,dockh,10)
     love.graphics.setColor(0.7,0.7,0.2,1)
     love.graphics.draw(coinImg, dockx+5, docky+5, 0, scale)
     love.graphics.setColor(1,1,1,1)
-    love.graphics.print(tostring(save.coins),cardfont,dockx+(imgw*scale)+5,docky+5)
+    love.graphics.print(tostring(save.coins),cardfont,dockx+(coinImg:getWidth()*scale)+5,docky+(math.abs(cardfontsize-dockh))/2)
 
 end
 
@@ -572,7 +574,7 @@ function drawStorePrompt()
     love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
     love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
 
-
+    love.graphics.setLineWidth(oldThick)
     local naipesDraw = {"spades","hearts","clubs","diamonds"}
     for k,v in ipairs(naipesDraw) do
         local spacing = ((width-cardw*4))/4
@@ -597,8 +599,10 @@ function drawStorePrompt()
 
 
     local newColor = {inStorePrompt.color[1],inStorePrompt.color[2],inStorePrompt.color[3]}
-    newColor[#newColor+1] = 0.8
     y=y-nh*1.5
+    love.graphics.setLineWidth(5)
+    love.graphics.setColor(inStorePrompt.textcolor)
+    love.graphics.rectangle("line",x,y,nw,nh,5)
     love.graphics.setColor(newColor)
     love.graphics.rectangle("fill",x,y,nw,nh,5)
     love.graphics.setColor(inStorePrompt.textcolor)
@@ -1285,15 +1289,8 @@ function addCards()
     end
 end
 
+--Plays a sound effect
 function playSound(sfx)
     local sound = sounds[sfx]:clone()
     love.audio.play(sound)
-end
-
-function getVisible()
-    if not cardlists[cardonhand.lastlist]==nil then
-        return cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible
-    else
-        return "true"
-    end
 end
