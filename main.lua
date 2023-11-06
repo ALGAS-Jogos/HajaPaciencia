@@ -1,6 +1,7 @@
 love.graphics.setDefaultFilter("linear","linear",10)
 
 require("utils.json")
+require("store.store")
 
 ordem = {"K","Q","J",10,9,8,7,6,5,4,3,2,"A"}
 cnaipes = {"spades","diamonds","clubs","hearts"}
@@ -49,6 +50,8 @@ inStorePrompt = nil
 inStats = false
 
 storeItems = {}
+storeCB = {}
+storeBacks = {}
 
 save = {
     coins=500,
@@ -93,8 +96,8 @@ function love.load()
     --local fw = io.open("store/items.json","w")
     --fw:write(json.encode(storeItems))
     --fw:close("exit")
-    loadStoreItems()
     loadSave()
+    storeItems=loadStoreItems()
     
     if system~="Android" then
         love.window.setMode(800,750)
@@ -523,11 +526,16 @@ function drawStore()
     love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setLineWidth(oldThick)
     for k,v in ipairs(storeItems) do
-        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
-        local y = screenh/2-height/2 + height/10
-        storeDrawCard("K","hearts",x,y,v)
+        local itr = k
+        local spacing = ((width-cardw*6))/6
+        local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+        --if k>1 then otherSpacing=0 end
+        local y = screenh/2-height/2 + height/25
+        if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+        local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+        storeDrawCard("K","spades",x,y,v)
         love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
-        love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,15)
+        love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
         love.graphics.setColor(0,0,0,1)
         if v.bought==false then
             love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
@@ -553,14 +561,17 @@ function drawStorePrompt()
     love.graphics.setColor(0,0,0,0.3)
     love.graphics.rectangle('fill',0,0,screenw,screenh)
     --draw the base rectangle and its border
+    local cellFactor = 2
+    if system=="Android" then cellFactor=1.60 end
     local width = screenw-(screenw/4)
-    local height = screenh-(screenh/2)
+    local height = screenh-(screenh/cellFactor)
     love.graphics.setLineWidth(7)
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
     love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
     love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setLineWidth(oldThick)
+
+
     local naipesDraw = {"spades","hearts","clubs","diamonds"}
     for k,v in ipairs(naipesDraw) do
         local spacing = ((width-cardw*4))/4
@@ -570,12 +581,28 @@ function drawStorePrompt()
         local y = screenh/2-height/2 + height/10
         storeDrawCard("A",v,x,y,inStorePrompt)
     end
-    love.graphics.setColor(0,0,0,0.8)
-    local x = screenw/2-150
-    local y = screenh/2+height/2-75
-    love.graphics.rectangle("fill",x,y,300,50,5)
+
+    local nw = width/2
+    local nh = height/6
+    local x = screenw/2-nw/2
+    local y = screenh/2+height/2-nh-15
+    love.graphics.setLineWidth(5)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",x,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",x,y,nw,nh,5)
     love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("Comprar",cardfont,x,y,300,"center")
+    love.graphics.printf("Comprar",cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+
+
+    local newColor = {inStorePrompt.color[1],inStorePrompt.color[2],inStorePrompt.color[3]}
+    newColor[#newColor+1] = 0.8
+    y=y-nh*1.5
+    love.graphics.setColor(newColor)
+    love.graphics.rectangle("fill",x,y,nw,nh,5)
+    love.graphics.setColor(inStorePrompt.textcolor)
+    love.graphics.printf(inStorePrompt.name,inStorePrompt.font,x,y+(nh-cardfontsize)/2,nw,"center")
+    love.graphics.setLineWidth(oldThick)
 end
 
 --Adds a card at the bottom of a list
@@ -679,7 +706,9 @@ function checkPile(mx,my)
             local y = cardh-cardh+cardfontsize+5 + androidOverhead
             if cardpile[i]==nil then
                 if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh then
-                    return i
+                    if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+                        return i
+                    end
                 end
             else
                 if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh and cardonhand[1].suit==cardpile[i][#cardpile[i]].suit then
@@ -765,8 +794,13 @@ function storeCollision(mx,my)
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3)
     for k,v in ipairs(storeItems) do
-        local x = screenw/2-width/2+(k-1)*(cardw+androidInterSpacing) + width/14
-        local y = screenh/2-height/2 + height/10
+        local itr = k
+        local spacing = ((width-cardw*6))/6
+        local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+        --if k>1 then otherSpacing=0 end
+        local y = screenh/2-height/2 + height/25
+        if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+        local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
             v["index"] = k
             if v.bought then
@@ -789,11 +823,15 @@ end
 
 --Collision of the storePrompt
 function storePromptCollision(mx,my)
+    local cellFactor = 2
+    if system=="Android" then cellFactor=1.60 end
     local width = screenw-(screenw/4)
-    local height = screenh-(screenh/2)
-    local x = screenw/2-150
-    local y = screenh/2+height/2-75
-    if mx >= x and mx <= x+width and my >= y and my <= y+height then
+    local height = screenh-(screenh/cellFactor)
+    local nw = width/2
+    local nh = height/6
+    local x = screenw/2-nw/2
+    local y = screenh/2+height/2-nh-15
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
         return "buy"
     end
     x = screenw/2-width/2
@@ -1129,17 +1167,6 @@ function changeBack()
     if newBack==8 then newBack=1 end
     backgroundImg=love.graphics.newImage("backgrounds/back"..newBack..".jpg")
     backNow=newBack
-end
-
---Loads the store items from the store/items.json file
-function loadStoreItems()
-    local obj = {}
-    local result = {}
-    obj = linesFrom("store/items.json")
-    for i,v in ipairs(obj) do
-        result[#result+1] = json.decode(v)
-    end
-    storeItems = result
 end
 
 --Loads the stats from the love filesystem saves
