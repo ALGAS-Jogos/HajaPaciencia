@@ -102,6 +102,7 @@ function love.load()
     loadSave()
     storeItems=loadStoreItems()
     storeCB=loadStoreCB()
+    storeBacks=loadStoreBacks()
     
     if system~="Android" then
         love.window.setMode(800,750)
@@ -307,6 +308,9 @@ function love.mousepressed(x, y, button, istouch)
                         elseif storeState==2 then
                             cardBack=inStorePrompt.img
                             storeCB[inStorePrompt.index].bought=true
+                        elseif storeState==3 then
+                            changeBack(inStorePrompt.img)
+                            storeBacks[inStorePrompt.index].bought=true
                         end
                         inStorePrompt=nil
                         inStore=false                        
@@ -569,6 +573,25 @@ function drawStore()
                 love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
             end
         end
+    elseif storeState==3 then
+        for k,v in ipairs(storeBacks) do
+            local itr = k
+            local spacing = ((width-cardw*6))/6
+            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+            --if k>1 then otherSpacing=0 end
+            local y = screenh/2-height/2 + height/25
+            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            storeDrawBack(x,y,v.img)
+            love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
+            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
+            love.graphics.setColor(0,0,0,1)
+            if v.bought==false then
+                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+            else
+                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+            end
+        end
     end
     
     --Dock render
@@ -629,6 +652,10 @@ function drawStorePrompt()
             storeDrawCard("A",v,x,y,inStorePrompt)
         end
     elseif storeState==2 then
+        local x = screenw/2-cardw/2
+        local y = screenh/2-height/2 + height/10
+        storeDrawBack(x,y,inStorePrompt.img)
+    elseif storeState==3 then
         local x = screenw/2-cardw/2
         local y = screenh/2-height/2 + height/10
         storeDrawBack(x,y,inStorePrompt.img)
@@ -867,7 +894,7 @@ function storeCollision(mx,my)
                 return "card"
             end
         end
-    else
+    elseif storeState==2 then
         for k,v in ipairs(storeCB) do
             local itr = k
             local spacing = ((width-cardw*6))/6
@@ -880,6 +907,26 @@ function storeCollision(mx,my)
                 v["index"] = k
                 if v.bought then
                     cardBack=v.img
+                    inStore=false
+                    return "card"
+                end
+                inStorePrompt=v
+                return "card"
+            end
+        end
+    elseif storeState==3 then
+        for k,v in ipairs(storeBacks) do
+            local itr = k
+            local spacing = ((width-cardw*6))/6
+            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+            --if k>1 then otherSpacing=0 end
+            local y = screenh/2-height/2 + height/25
+            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
+                v["index"] = k
+                if v.bought then
+                    changeBack(v.img)
                     inStore=false
                     return "card"
                 end
@@ -1023,7 +1070,7 @@ function pressButton(btn)
     if btn==1 then --UNDO
         getUndo()
     elseif btn==2 then --STATS
-        changeBack()
+        --changeBack()
     elseif btn==3 then --NEW
         playSound("new")
         startGame()
@@ -1269,14 +1316,14 @@ function resetAllFonts()
     for k,v in ipairs(storeCB) do
         v.font = love.graphics.newFont(v.font,cardfontsize)
     end
+    for k,v in ipairs(storeBacks) do
+        v.font = love.graphics.newFont(v.font,cardfontsize)
+    end
 end
 
 --Changes the background image (not complete, not taking input)
-function changeBack()
-    local newBack = backNow+1
-    if newBack==8 then newBack=1 end
-    backgroundImg=love.graphics.newImage("backgrounds/back"..newBack..".jpg")
-    backNow=newBack
+function changeBack(img)
+    backgroundImg=img
 end
 
 --Loads the stats from the love filesystem saves
