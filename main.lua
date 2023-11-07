@@ -676,7 +676,7 @@ function drawStorePrompt()
 
     local newColor = {inStorePrompt.color[1],inStorePrompt.color[2],inStorePrompt.color[3]}
     y=y-nh*1.5
-    nw=nStorePrompt.font:getWidth(inStorePrompt.name)+30
+    nw=inStorePrompt.font:getWidth(inStorePrompt.name)+30
     x = screenw/2-nw/2
     love.graphics.setLineWidth(5)
     love.graphics.setColor(inStorePrompt.textcolor)
