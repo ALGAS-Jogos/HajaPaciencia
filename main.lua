@@ -53,6 +53,9 @@ storeItems = {}
 storeCB = {}
 storeBacks = {}
 
+storeButtons = {"Cartas","Versos","Fundos"}
+storeState = 1
+
 save = {
     coins=500,
     highScore=0,
@@ -98,6 +101,7 @@ function love.load()
     --fw:close("exit")
     loadSave()
     storeItems=loadStoreItems()
+    storeCB=loadStoreCB()
     
     if system~="Android" then
         love.window.setMode(800,750)
@@ -288,14 +292,10 @@ function love.mousepressed(x, y, button, istouch)
         elseif inStore then
             if inStorePrompt==nil then
                 local whatButton = storeCollision(x,y)
-                if whatButton=="backs" then
-
-                elseif whatButton=="cardbacks" then
-
-                elseif whatButton=="cards" then
-
-                elseif whatButton=="outside" then
+                if whatButton=="outside" then
                     inStore=false
+                else
+                    storeState=whatButton
                 end
             else
                 local whatButton = storePromptCollision(x,y)
@@ -526,22 +526,43 @@ function drawStore()
     love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
     love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setLineWidth(oldThick)
-    for k,v in ipairs(storeItems) do
-        local itr = k
-        local spacing = ((width-cardw*6))/6
-        local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-        --if k>1 then otherSpacing=0 end
-        local y = screenh/2-height/2 + height/25
-        if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
-        local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-        storeDrawCard("K","spades",x,y,v)
-        love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
-        love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-        love.graphics.setColor(0,0,0,1)
-        if v.bought==false then
-            love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
-        else
-            love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+    if storeState==1 then
+        for k,v in ipairs(storeItems) do
+            local itr = k
+            local spacing = ((width-cardw*6))/6
+            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+            --if k>1 then otherSpacing=0 end
+            local y = screenh/2-height/2 + height/25
+            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            storeDrawCard("K","spades",x,y,v)
+            love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
+            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
+            love.graphics.setColor(0,0,0,1)
+            if v.bought==false then
+                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+            else
+                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+            end
+        end
+    elseif storeState==2 then
+        for k,v in ipairs(storeCB) do
+            local itr = k
+            local spacing = ((width-cardw*6))/6
+            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+            --if k>1 then otherSpacing=0 end
+            local y = screenh/2-height/2 + height/25
+            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            storeDrawBack(x,y,v.img)
+            love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
+            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
+            love.graphics.setColor(0,0,0,1)
+            if v.bought==false then
+                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+            else
+                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+            end
         end
     end
     
@@ -557,6 +578,23 @@ function drawStore()
     love.graphics.setColor(1,1,1,1)
     love.graphics.print(tostring(save.coins),cardfont,dockx+(coinImg:getWidth()*scale)+5,docky+(math.abs(cardfontsize-dockh))/2)
 
+    --Buttons
+    for i=1,3 do
+        local nw = cardfont:getWidth(storeButtons[1])+15
+        local nh = cardfontsize+10
+        local x = screenw/2+width/2-nw-5
+        local y = screenh/2-height/2+height-dockh-(nh+5)*(i-1)
+        if i==storeState then
+            love.graphics.setLineWidth(6)
+            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+            love.graphics.rectangle("line",x,y,nw,nh,5)
+        end
+        love.graphics.setColor(0, 0.239, 0.063)
+        love.graphics.rectangle("fill",x,y,nw,nh,5)
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.printf(storeButtons[i],cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    end
+    love.graphics.setLineWidth(oldThick)
 end
 
 function drawStorePrompt()
@@ -822,6 +860,16 @@ function storeCollision(mx,my)
     if mx >= x and mx <= x+width and my >= y and my <= y+height then 
     else
         return "outside"
+    end
+    for i=1,3 do
+        local nw = cardfont:getWidth(storeButtons[1])+15
+        local nh = cardfontsize+10
+        local x = screenw/2+width/2-nw-5
+        local dockh=height/8
+        local y = screenh/2-height/2+height-dockh-(nh+5)*(i-1)
+        if mx >= x and mx <= x+nw and my >= y and my <= y+nh then 
+            return i
+        end
     end
     
 end
@@ -1160,6 +1208,22 @@ function storeDrawCard(number,suit,x,y,cardStyle)
         y=y-5
     end
     love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
+    love.graphics.setColor(1,1,1)
+end
+
+--Same as drawBack but it also takes an image as a back image
+function storeDrawBack(x,y,img)
+    love.graphics.setColor(0,0,0)
+    love.graphics.rectangle("line",x,y,cardw,cardh,round)
+    love.graphics.setColor(1,1,1)
+    GLOBALBACKX, GLOBALBACKY = x,y
+    love.graphics.stencil(stencilRounded)
+    love.graphics.setStencilTest("greater",0)
+    local scaleX,scaleY = img:getDimensions()
+    scaleX=cardw/scaleX
+    scaleY=cardh/scaleY
+    love.graphics.draw(img,x,y,0,scaleX,scaleY)
+    love.graphics.setStencilTest()
     love.graphics.setColor(1,1,1)
 end
 

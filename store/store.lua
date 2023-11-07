@@ -23,3 +23,12 @@ function loadStoreItems()
     }
     return obj
 end
+
+--Loads the store card backs
+function loadStoreCB()
+    local obj = {
+        {name="Default",price=0,bought=true,img=love.graphics.newImage("cards/back1.png")},
+        {name="Test",price=500,bought=false,img=love.graphics.newImage("cards/back2.png")}
+    }
+    return obj
+end
