@@ -294,15 +294,20 @@ function love.mousepressed(x, y, button, istouch)
                 local whatButton = storeCollision(x,y)
                 if whatButton=="outside" then
                     inStore=false
-                else
+                elseif whatButton==1 or whatButton==2 or whatButton==3 then
                     storeState=whatButton
                 end
             else
                 local whatButton = storePromptCollision(x,y)
                 if whatButton=="buy" then
                     if save.coins>=inStorePrompt.price then
-                        cardStyle=inStorePrompt
-                        storeItems[inStorePrompt.index].bought = true
+                        if storeState==1 then
+                            cardStyle=inStorePrompt
+                            storeItems[inStorePrompt.index].bought = true
+                        elseif storeState==2 then
+                            cardBack=inStorePrompt.img
+                            storeCB[inStorePrompt.index].bought=true
+                        end
                         inStorePrompt=nil
                         inStore=false                        
                     end
@@ -613,14 +618,20 @@ function drawStorePrompt()
     love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
 
     love.graphics.setLineWidth(oldThick)
-    local naipesDraw = {"spades","hearts","clubs","diamonds"}
-    for k,v in ipairs(naipesDraw) do
-        local spacing = ((width-cardw*4))/4
-        local otherSpacing = ((screenw/2-width/2+(4)*(cardw+spacing))-width)/4
-        --if k>1 then otherSpacing=0 end
-        local x = screenw/2-width/2+(k-1)*(cardw+spacing) + otherSpacing
+    if storeState==1 then
+        local naipesDraw = {"spades","hearts","clubs","diamonds"}
+        for k,v in ipairs(naipesDraw) do
+            local spacing = ((width-cardw*4))/4
+            local otherSpacing = ((screenw/2-width/2+(4)*(cardw+spacing))-width)/4
+            --if k>1 then otherSpacing=0 end
+            local x = screenw/2-width/2+(k-1)*(cardw+spacing) + otherSpacing
+            local y = screenh/2-height/2 + height/10
+            storeDrawCard("A",v,x,y,inStorePrompt)
+        end
+    elseif storeState==2 then
+        local x = screenw/2-cardw/2
         local y = screenh/2-height/2 + height/10
-        storeDrawCard("A",v,x,y,inStorePrompt)
+        storeDrawBack(x,y,inStorePrompt.img)
     end
 
     local nw = width/2
@@ -836,23 +847,45 @@ end
 function storeCollision(mx,my)
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3)
-    for k,v in ipairs(storeItems) do
-        local itr = k
-        local spacing = ((width-cardw*6))/6
-        local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-        --if k>1 then otherSpacing=0 end
-        local y = screenh/2-height/2 + height/25
-        if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
-        local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-        if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
-            v["index"] = k
-            if v.bought then
-                cardStyle=v
-                inStore=false
+    if storeState==1 then
+        for k,v in ipairs(storeItems) do
+            local itr = k
+            local spacing = ((width-cardw*6))/6
+            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+            --if k>1 then otherSpacing=0 end
+            local y = screenh/2-height/2 + height/25
+            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
+                v["index"] = k
+                if v.bought then
+                    cardStyle=v
+                    inStore=false
+                    return "card"
+                end
+                inStorePrompt=v
                 return "card"
             end
-            inStorePrompt=v
-            return "card"
+        end
+    else
+        for k,v in ipairs(storeCB) do
+            local itr = k
+            local spacing = ((width-cardw*6))/6
+            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
+            --if k>1 then otherSpacing=0 end
+            local y = screenh/2-height/2 + height/25
+            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
+                v["index"] = k
+                if v.bought then
+                    cardBack=v.img
+                    inStore=false
+                    return "card"
+                end
+                inStorePrompt=v
+                return "card"
+            end
         end
     end
     local x = screenw/2-width/2
@@ -1231,6 +1264,9 @@ end
 function resetAllFonts()
     cardStyle.font = love.graphics.newFont(cardStyle.font,cardfontsize)
     for k,v in ipairs(storeItems) do
+        v.font = love.graphics.newFont(v.font,cardfontsize)
+    end
+    for k,v in ipairs(storeCB) do
         v.font = love.graphics.newFont(v.font,cardfontsize)
     end
 end
