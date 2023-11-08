@@ -48,6 +48,9 @@ oldThick = love.graphics.getLineWidth()
 inStore = false
 inStorePrompt = nil
 inStats = false
+inVictory = false
+
+victoryCoins = 0
 
 storeItems = {}
 storeCB = {}
@@ -62,7 +65,8 @@ save = {
     highTime="0:00",
     totalTime="0:00",
     points=0,
-    currentTime="0:00"
+    currentTime="0:00",
+    moves=0
 }
 
 currentSecs = 0
@@ -212,22 +216,23 @@ function love.update(dt)
             end
         end
     end
-
-    currentCD=currentCD+dt
-    timePunish=timePunish+dt
-    if currentCD>=1 then
-        currentCD=currentCD-1
-        updateTime()
-    end
-    if timePunish>=10 then
-        timePunish=timePunish-10
-        deductPoints(2)
+    if inVictory==false and inStats==false and inStore==false then
+        currentCD=currentCD+dt
+        timePunish=timePunish+dt
+        if currentCD>=1 then
+            currentCD=currentCD-1
+            updateTime()
+        end
+        if timePunish>=10 then
+            timePunish=timePunish-10
+            deductPoints(2)
+        end
     end
 end
 
 function love.mousepressed(x, y, button, istouch)
     if button == 1 then 
-        if inStats==false and inStore==false then
+        if inStats==false and inStore==false and inVictory==false then
             if cardonhand==nil then
                 local card,list,index = checkCollision(x,y)
                 local pile = checkPile(x,y)
@@ -312,6 +317,7 @@ function love.mousepressed(x, y, button, istouch)
                             changeBack(inStorePrompt.img)
                             storeBacks[inStorePrompt.index].bought=true
                         end
+                        save.coins=save.coins-inStorePrompt.price
                         inStorePrompt=nil
                         inStore=false                        
                     end
@@ -321,6 +327,14 @@ function love.mousepressed(x, y, button, istouch)
             end
         elseif inStats then
 
+        elseif inVictory then
+            local whatButton = victoryCollision(x,y)
+            if whatButton=="new" then
+                pressButton(3)
+                inVictory=false
+            elseif whatButton=="outside" then
+                inVictory=false
+            end
         end
     end
  end
@@ -412,6 +426,7 @@ function love.draw()
     if inStore then drawStore() end
     if inStorePrompt then drawStorePrompt() end
     if inStats then drawStats() end
+    if inVictory then drawVictory() end
 end
 
 function drawTime()
@@ -661,7 +676,9 @@ function drawStorePrompt()
         storeDrawBack(x,y,inStorePrompt.img)
     end
 
-    local nw = width/2
+    local text = "Comprar"
+    if save.coins<inStorePrompt.price then text="Sem dinheiro" end
+    local nw = cardfont:getWidth(text)+30
     local nh = height/6
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
@@ -671,7 +688,7 @@ function drawStorePrompt()
     love.graphics.setColor(0, 0.239, 0.063)
     love.graphics.rectangle("fill",x,y,nw,nh,5)
     love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("Comprar",cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
 
 
     local newColor = {inStorePrompt.color[1],inStorePrompt.color[2],inStorePrompt.color[3]}
@@ -685,6 +702,98 @@ function drawStorePrompt()
     love.graphics.rectangle("fill",x,y,nw,nh,5)
     love.graphics.setColor(inStorePrompt.textcolor)
     love.graphics.printf(inStorePrompt.name,inStorePrompt.font,x,y+(nh-cardfontsize)/2,nw,"center")
+    love.graphics.setLineWidth(oldThick)
+end
+
+function drawVictory()
+    --grey the background out
+    love.graphics.setColor(0,0,0,0.3)
+    love.graphics.rectangle('fill',0,0,screenw,screenh)
+    --draw the base rectangle and its border
+    local cellFactor = 2.60
+    if system=="Android" then cellFactor=2 end
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/cellFactor)
+    love.graphics.setLineWidth(7)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
+    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+
+    --some of the calculus
+    local timeBonus = 0
+    local movBonus = 0
+    local totalSecs = currentMins*60+currentSecs
+    if totalSecs<=150 then
+        timeBonus=15
+    elseif totalSecs>=240 and totalSecs<=480 then
+        timeBonus=-5
+    elseif totalSecs>480 then
+        timeBonus=-15
+    end
+    if save.moves<=100 then
+        movBonus=15
+    elseif save.moves>300 then
+        movBonus=-25
+    end
+
+    --victory label
+    local x = screenw/2-width/2
+    local y = screenh/2-height/2+15
+    local ySpacing = 12
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Vitória!",cardfont,x,y,width,"center")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    y=y+ySpacing
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Tempo",cardfont,x+10,y,width,"left")
+    local sec=tostring(currentSecs)
+    if tonumber(sec)<10 then sec="0"..sec end
+    local text = currentMins..":"..sec
+    if timeBonus>0 then text = "Bônus! +"..timeBonus.." "..text end
+    if timeBonus<0 then text = "Penalidade! -"..timeBonus.." "..text end
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    y=y+ySpacing
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Movimentos",cardfont,x+10,y,width,"left")
+    local text = save.moves
+    if movBonus>0 then text = "Bônus! +"..movBonus.." "..text end
+    if movBonus<0 then text = "Penalidade! -"..movBonus.." "..text end
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    y=y+ySpacing
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Pontos",cardfont,x+10,y,width,"left")
+    local text = save.points
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    y=y+ySpacing
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Moedas",cardfont,x+10,y,width,"left")
+    local text = "+"..victoryCoins
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+
+    --botão de jogar denovo
+    local nw = cardfont:getWidth("Jogar denovo")+30
+    local nh = height/6
+    local x = screenw/2-nw/2
+    local y = screenh/2+height/2-nh-15
+    love.graphics.setLineWidth(5)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",x,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",x,y,nw,nh,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.printf("Jogar denovo",cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
     love.graphics.setLineWidth(oldThick)
 end
 
@@ -962,12 +1071,34 @@ function storePromptCollision(mx,my)
     if system=="Android" then cellFactor=1.60 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
-    local nw = width/2
+    local text = "Comprar"
+    if save.coins<inStorePrompt.price then text="Sem dinheiro" end
+    local nw = cardfont:getWidth(text)+30
     local nh = height/6
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
     if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
         return "buy"
+    end
+    x = screenw/2-width/2
+    y = screenh/2-height/2
+    if mx >= x and mx <= x+width and my >= y and my <= y+height then 
+    else
+        return "outside"
+    end
+end
+
+function victoryCollision(mx,my)
+    local cellFactor = 2.60
+    if system=="Android" then cellFactor=2 end
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/cellFactor)
+    local nw = cardfont:getWidth("Jogar denovo")+30
+    local nh = height/6
+    local x = screenw/2-nw/2
+    local y = screenh/2+height/2-nh-15
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "new"
     end
     x = screenw/2-width/2
     y = screenh/2-height/2
@@ -1124,6 +1255,7 @@ function putLastMove(oldLocation,newLocation,size,index,behindHidden)
     lastMoves[#lastMoves+1] = move
     lastMovesIndex = #lastMoves+1
     forwardMoves = {}
+    save.moves=save.moves+1
 end
 
 --Gets the undo and does the funky bits
@@ -1154,6 +1286,7 @@ function getUndo()
         forwardMoves[#forwardMoves+1] = move
         table.remove(lastMoves,lastMovesIndex)
         deductPoints(10)
+        save.moves=save.moves+1
     end
 end
 
@@ -1181,6 +1314,7 @@ function getRedo()
         lastMoves[#lastMoves+1] = move
         lastMovesIndex = #lastMoves+1
         table.remove(forwardMoves,#forwardMoves)
+        save.moves=save.moves+1
     end
 end
 
@@ -1366,9 +1500,30 @@ function checkVictory()
         if v[#v].number == "K" then comply=comply+1 end
     end
     if comply==4 then
-        print("YOU WON!!!!")
-        love.event.quit()
+        calculateVictory()
+        inVictory=true
     end
+end
+
+function calculateVictory()
+    --calculate the total coins
+    local timeBonus = 0
+    local movBonus = 0
+    local totalSecs = currentMins*60+currentSecs
+    if totalSecs<=150 then
+        timeBonus=15
+    elseif totalSecs>=240 and totalSecs<=480 then
+        timeBonus=-5
+    elseif totalSecs>480 then
+        timeBonus=-15
+    end
+    if save.moves<=100 then
+        movBonus=15
+    elseif save.moves>300 then
+        movBonus=-25
+    end
+    victoryCoins = math.floor(math.max(50,(save.points*0.45)+timeBonus+movBonus))
+    save.coins=save.coins+victoryCoins
 end
 
 --Takes points away from player
