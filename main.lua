@@ -95,7 +95,8 @@ random = love.math.random
 
 sounds = {
     move = love.audio.newSource("sfx/move.mp3","static"),
-    new = love.audio.newSource("sfx/new.mp3","static")
+    new = love.audio.newSource("sfx/new.mp3","static"),
+    victory = love.audio.newSource("sfx/victory.mp3","static")
 }
 
 function love.load()
@@ -420,6 +421,9 @@ function love.draw()
     --draw time :D
     drawTime()
 
+    --draw the moves counter :D
+    drawMoves()
+
     --draw buttons
     drawButtons()
 
@@ -435,6 +439,14 @@ function drawTime()
     love.graphics.rectangle("fill",screenw-cardfont:getWidth(text)-10,-5,cardfont:getWidth(text)+15,cardfontsize+7,5)
     love.graphics.setColor(1,1,1,1)
     love.graphics.print(text,cardfont,screenw-cardfont:getWidth(text)-5,0)
+end
+
+function drawMoves()
+    local text = "Movs: "..save.moves
+    love.graphics.setColor(0,0,0,0.5)
+    love.graphics.rectangle("fill",screenw/2-cardfont:getWidth(text)/2-10,-5,cardfont:getWidth(text)+15,cardfontsize+7,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.print(text,cardfont,screenw/2-cardfont:getWidth(text)/2-5,0)
 end
 
 function drawPoints()
@@ -560,9 +572,13 @@ function drawStore()
             if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
             storeDrawCard("K","spades",x,y,v)
-            love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
+            love.graphics.setLineWidth(4)
+            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
+            love.graphics.setColor(0, 0.239, 0.063)
             love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0,0,0,1)
+            love.graphics.setColor(1,1,1,1)
+            love.graphics.setLineWidth(oldThick)
             if v.bought==false then
                 love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
             else
@@ -579,9 +595,13 @@ function drawStore()
             if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
             storeDrawBack(x,y,v.img)
-            love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
+            love.graphics.setLineWidth(4)
+            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
+            love.graphics.setColor(0, 0.239, 0.063)
             love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0,0,0,1)
+            love.graphics.setColor(1,1,1,1)
+            love.graphics.setLineWidth(oldThick)
             if v.bought==false then
                 love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
             else
@@ -598,9 +618,13 @@ function drawStore()
             if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
             storeDrawBack(x,y,v.img)
-            love.graphics.setColor(love.math.colorFromBytes(169, 245, 189))
+            love.graphics.setLineWidth(4)
+            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
+            love.graphics.setColor(0, 0.239, 0.063)
             love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0,0,0,1)
+            love.graphics.setColor(1,1,1,1)
+            love.graphics.setLineWidth(oldThick)
             if v.bought==false then
                 love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
             else
@@ -753,7 +777,7 @@ function drawVictory()
     if tonumber(sec)<10 then sec="0"..sec end
     local text = currentMins..":"..sec
     if timeBonus>0 then text = "Bônus! +"..timeBonus.." "..text end
-    if timeBonus<0 then text = "Penalidade! -"..timeBonus.." "..text end
+    if timeBonus<0 then text = "Penalidade! "..timeBonus.." "..text end
     love.graphics.printf(text,cardfont,x,y,width-10,"right")
     y=y+cardfontsize+ySpacing
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -763,7 +787,7 @@ function drawVictory()
     love.graphics.printf("Movimentos",cardfont,x+10,y,width,"left")
     local text = save.moves
     if movBonus>0 then text = "Bônus! +"..movBonus.." "..text end
-    if movBonus<0 then text = "Penalidade! -"..movBonus.." "..text end
+    if movBonus<0 then text = "Penalidade! "..movBonus.." "..text end
     love.graphics.printf(text,cardfont,x,y,width-10,"right")
     y=y+cardfontsize+ySpacing
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -1357,7 +1381,7 @@ function execMove(from,to,size,index,operation,behindHidden)
         for i=1,#card do
             cardlists[to][#cardlists[to]+1] = card[i]
         end
-        print(behindHidden)
+        --print(behindHidden)
         if cardlists[to][#cardlists[to]-size] and operation=="undo" and behindHidden=="false" then cardlists[to][#cardlists[to]-size].visible = false end
         return #cardlists[to]-size+1
     end
@@ -1501,6 +1525,7 @@ function checkVictory()
     end
     if comply==4 then
         calculateVictory()
+        playSound("victory")
         inVictory=true
     end
 end
