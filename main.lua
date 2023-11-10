@@ -50,6 +50,8 @@ inStorePrompt = nil
 inStats = false
 inVictory = false
 
+wonGame = false
+
 victoryCoins = 0
 
 storeItems = {}
@@ -105,7 +107,6 @@ sounds = {
 }
 
 function love.load()
-    startGame()
     local temp = readSave()
     if temp~=nil then 
         save=temp
@@ -149,6 +150,7 @@ function love.load()
     end
     resetAllFonts()
     resetImages()
+    startGame()
 end
 
 function love.update(dt)
@@ -228,12 +230,13 @@ function love.update(dt)
             end
         end
     end
-    if inVictory==false and inStats==false and inStore==false then
+    if inVictory==false and inStats==false and inStore==false and wonGame==false then
         currentCD=currentCD+dt
         timePunish=timePunish+dt
         if currentCD>=1 then
             currentCD=currentCD-1
             updateTime()
+            saveGame()
         end
         if timePunish>=10 then
             timePunish=timePunish-10
@@ -246,59 +249,61 @@ function love.mousepressed(x, y, button, istouch)
     if button == 1 then 
         if inStats==false and inStore==false and inVictory==false then
             if cardonhand==nil then
-                local card,list,index = checkCollision(x,y)
-                local pile = checkPile(x,y)
-                if card then
-                    cardonhand=card
-                    cardonhand.lastlist=list
-                    cardx, cardy = whereClicked("list",list,index)
-                    cardonhand.cardx = cardx
-                    cardonhand.cardy = cardy
-                    for i=index,index+#card-1 do
-                        cardlists[list][i]=nil
-                    end
-                elseif pile then
-                    local pileToTake = cardpile[pile]
-                    if pileToTake then
-                        if #pileToTake>0 then
-                            cardx, cardy = whereClicked("pile",pile)
-                            cardonhand = {cardpile[pile][#cardpile[pile]]}              
-                            table.remove(pileToTake,#pileToTake)
-                            if #cardpile[pile]==0 then cardpile[pile] = nil end
-                            cardonhand.lastlist="pile"..pile
-                            cardonhand.cardx = cardx
-                            cardonhand.cardy = cardy
+                if wonGame==false then
+                    local card,list,index = checkCollision(x,y)
+                    local pile = checkPile(x,y)
+                    if card then
+                        cardonhand=card
+                        cardonhand.lastlist=list
+                        cardx, cardy = whereClicked("list",list,index)
+                        cardonhand.cardx = cardx
+                        cardonhand.cardy = cardy
+                        for i=index,index+#card-1 do
+                            cardlists[list][i]=nil
                         end
-                    end
-                else
-                    if checkStack(x,y) then
-                        if #cardstacks>0 then
-                            local card = cardstacks[#cardstacks]
-                            cardlitter[#cardlitter+1] = card
-                            table.remove(cardstacks,#cardstacks)
-                            local move = "stack"
-                            lastMoves[#lastMoves+1] = move
-                            lastMovesIndex = #lastMoves+1
-                            forwardMoves = {}
-                        else
-                            cardstacks = invertTable(cardlitter)
-                            cardlitter = {}
-                            local move = "restack"
-                            lastMoves[#lastMoves+1] = move
-                            lastMovesIndex = #lastMoves+1
-                            forwardMoves = {}
-                            deductPoints(100)
+                    elseif pile then
+                        local pileToTake = cardpile[pile]
+                        if pileToTake then
+                            if #pileToTake>0 then
+                                cardx, cardy = whereClicked("pile",pile)
+                                cardonhand = {cardpile[pile][#cardpile[pile]]}              
+                                table.remove(pileToTake,#pileToTake)
+                                if #cardpile[pile]==0 then cardpile[pile] = nil end
+                                cardonhand.lastlist="pile"..pile
+                                cardonhand.cardx = cardx
+                                cardonhand.cardy = cardy
+                            end
                         end
-                        playSound("move")
                     else
-                        local card = checkLitter(x,y)                    
-                        if card then
-                            cardx, cardy = whereClicked("litter")
-                            cardonhand=card
-                            cardonhand.lastlist="litter"
-                            cardonhand.cardx = cardx
-                            cardonhand.cardy = cardy
-                            table.remove(cardlitter,#cardlitter)
+                        if checkStack(x,y) then
+                            if #cardstacks>0 then
+                                local card = cardstacks[#cardstacks]
+                                cardlitter[#cardlitter+1] = card
+                                table.remove(cardstacks,#cardstacks)
+                                local move = "stack"
+                                lastMoves[#lastMoves+1] = move
+                                lastMovesIndex = #lastMoves+1
+                                forwardMoves = {}
+                            else
+                                cardstacks = invertTable(cardlitter)
+                                cardlitter = {}
+                                local move = "restack"
+                                lastMoves[#lastMoves+1] = move
+                                lastMovesIndex = #lastMoves+1
+                                forwardMoves = {}
+                                deductPoints(100)
+                            end
+                            playSound("move")
+                        else
+                            local card = checkLitter(x,y)                    
+                            if card then
+                                cardx, cardy = whereClicked("litter")
+                                cardonhand=card
+                                cardonhand.lastlist="litter"
+                                cardonhand.cardx = cardx
+                                cardonhand.cardy = cardy
+                                table.remove(cardlitter,#cardlitter)
+                            end
                         end
                     end
                 end
@@ -842,7 +847,7 @@ function drawStats()
     love.graphics.setColor(0,0,0,0.3)
     love.graphics.rectangle('fill',0,0,screenw,screenh)
     --draw the base rectangle and its border
-    local cellFactor = 2.60
+    local cellFactor = 3
     if system=="Android" then cellFactor=2 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
@@ -889,6 +894,14 @@ function drawStats()
     y=y+cardfontsize+ySpacing
     love.graphics.printf("Partidas perdidas",cardfont,x+10,y,width,"left")
     local text = save.totalLoss
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    love.graphics.setColor(1,1,1)
+    y=y+ySpacing
+    love.graphics.printf("Maior pontuação",cardfont,x+10,y,width,"left")
+    local text = save.highScore
     love.graphics.printf(text,cardfont,x,y,width-10,"right")
 
     --botão de jogar denovo
@@ -1222,7 +1235,7 @@ end
 
 --Collision for the stats screen
 function statsCollision(mx,my)
-    local cellFactor = 2.60
+    local cellFactor = 3
     if system=="Android" then cellFactor=2 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
@@ -1296,6 +1309,7 @@ function startGame()
     currentMins=0
     currentCD=0
     timePunish=0
+    save.moves=0
 end
 
 --Wipes the board
@@ -1339,6 +1353,9 @@ function pressButton(btn)
         statsButton()
     elseif btn==3 then --NEW
         playSound("new")
+        if wonGame==false then save.totalLoss=save.totalLoss+1 end
+        save.totalGames=save.totalGames+1
+        wonGame=false
         startGame()
     elseif btn==4 then --STORE
         storeButton()
@@ -1635,11 +1652,15 @@ function checkVictory()
     end
     if comply==4 then
         calculateVictory()
+        statsUpdate()
+        save.totalWins=save.totalWins+1
+        wonGame=true
         playSound("victory")
         inVictory=true
     end
 end
 
+--Calculate the victory coins
 function calculateVictory()
     --calculate the total coins
     local timeBonus = 0
@@ -1758,7 +1779,7 @@ function saveGame()
 end
 
 function readSave()
-    local check = love.filesystem.getInfo("save")
+    local check = love.filesystem.getInfo("save") 
     if check then
         local temp, size = love.filesystem.read("save")
         local tmp = love.filesystem.read("storeItems")
@@ -1773,4 +1794,38 @@ function readSave()
     else
         return nil
     end
+end
+
+function statsUpdate()
+    local lowest = split(save.lowTime,":")
+    if (save.lowTime=="0:00") then
+        save.lowTime=currentMins..":"..formatSecs(currentSecs)
+    else
+        if currentMins<tonumber(lowest[1]) then
+            save.lowTime=currentMins..":"..formatSecs(currentSecs)
+        elseif currentMins==tonumber(lowest[1]) and currentSecs<tonumber(lowest[2]) then
+            save.lowTime=currentMins..":"..formatSecs(currentSecs)
+        end
+    end
+    local highest = split(save.highTime,":")
+    if (save.highTime=="0:00") then
+        save.highTime=currentMins..":"..formatSecs(currentSecs)
+    else
+        if currentMins>tonumber(highest[1]) then
+            save.highTime=currentMins..":"..formatSecs(currentSecs)
+        elseif currentMins==tonumber(highest[1]) and currentSecs>tonumber(highest[2]) then
+            save.highTime=currentMins..":"..formatSecs(currentSecs)
+        end
+    end
+    local totalTime = split(save.totalTime,":")
+    totalTime[1]=tonumber(totalTime[1])+currentMins
+    totalTime[2]=tonumber(totalTime[2])+currentSecs
+    save.totalTime=totalTime[1]..":"..formatSecs(totalTime[2])
+
+    if save.points>save.highScore then save.highScore=save.points end
+end
+
+function formatSecs(secs)
+    if tonumber(secs)<10 then return "0"..tostring(secs) end
+    return tostring(secs)
 end
