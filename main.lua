@@ -906,7 +906,7 @@ function drawStats()
 
     --botão de jogar denovo
     local nw = cardfont:getWidth("Voltar")+30
-    local nh = height/6
+    local nh = cardfont:getHeight()+10
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
     love.graphics.setLineWidth(5)
@@ -915,7 +915,7 @@ function drawStats()
     love.graphics.setColor(0, 0.239, 0.063)
     love.graphics.rectangle("fill",x,y,nw,nh,5)
     love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("Voltar",cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+    love.graphics.printf("Voltar",cardfont,x,y+5,nw,"center")
     love.graphics.setLineWidth(oldThick)
 end
 
