@@ -63,10 +63,16 @@ save = {
     coins=500,
     highScore=0,
     highTime="0:00",
+    lowTime="0:00",
     totalTime="0:00",
+    totalGames=0,
+    totalWins=0,
+    totalLoss=0,
     points=0,
     currentTime="0:00",
-    moves=0
+    moves=0,
+    backImg="backgrounds/back1.jpg",
+    backCard="cards/back1.png"
 }
 
 currentSecs = 0
@@ -76,17 +82,16 @@ timePunish = 0
 
 cardStyle = {
     color={1,1,1},
-    textcolor={0,0,0},
-    suitcolor={0,0,0},
-    casered={0.6,0,0},
-    backImg=nil,
-    font="fonts/Bricolage.ttf"
+        textcolor={0,0,0},
+        suitcolor={0,0,0},
+        casered={0.6,0,0},
+        backImg=nil,
+        fontName="fonts/Bricolage.ttf",
+        font="fonts/Bricolage.ttf",
+        bought=true,
+        price=0,
+        name="Default"
 }
-
-backgroundImg = love.graphics.newImage("backgrounds/back1.jpg")
-backNow = 1
-
-cardBack = love.graphics.newImage("cards/back1.png")
 
 love.graphics.setBackgroundColor(0.2,0.05,0.2)
 
@@ -100,14 +105,20 @@ sounds = {
 }
 
 function love.load()
-    --This will put all the store items in a file
-    --local fw = io.open("store/items.json","w")
-    --fw:write(json.encode(storeItems))
-    --fw:close("exit")
-    loadSave()
-    storeItems=loadStoreItems()
-    storeCB=loadStoreCB()
-    storeBacks=loadStoreBacks()
+    startGame()
+    local temp = readSave()
+    if temp~=nil then 
+        save=temp
+        local time = split(save.currentTime,":")
+        currentMins=time[1]
+        currentSecs=time[2]
+    else
+        storeItems=loadStoreItems()
+        storeCB=loadStoreCB()
+        storeBacks=loadStoreBacks()
+    end
+    backgroundImg = love.graphics.newImage(save.backImg)
+    cardBack = love.graphics.newImage(save.backCard)
     
     if system~="Android" then
         love.window.setMode(800,750)
@@ -137,7 +148,7 @@ function love.load()
         screenw, screenh = love.graphics.getDimensions()
     end
     resetAllFonts()
-    startGame()
+    resetImages()
 end
 
 function love.update(dt)
@@ -313,9 +324,11 @@ function love.mousepressed(x, y, button, istouch)
                             storeItems[inStorePrompt.index].bought = true
                         elseif storeState==2 then
                             cardBack=inStorePrompt.img
+                            save.backCard=inStorePrompt.imgName
                             storeCB[inStorePrompt.index].bought=true
                         elseif storeState==3 then
                             changeBack(inStorePrompt.img)
+                            save.backImg=inStorePrompt.imgName
                             storeBacks[inStorePrompt.index].bought=true
                         end
                         save.coins=save.coins-inStorePrompt.price
@@ -327,7 +340,10 @@ function love.mousepressed(x, y, button, istouch)
                 end
             end
         elseif inStats then
-
+            local whatButton = statsCollision(x,y)
+            if whatButton=="outside" then
+                inStats=false
+            end
         elseif inVictory then
             local whatButton = victoryCollision(x,y)
             if whatButton=="new" then
@@ -821,6 +837,75 @@ function drawVictory()
     love.graphics.setLineWidth(oldThick)
 end
 
+function drawStats()
+    --grey the background out
+    love.graphics.setColor(0,0,0,0.3)
+    love.graphics.rectangle('fill',0,0,screenw,screenh)
+    --draw the base rectangle and its border
+    local cellFactor = 2.60
+    if system=="Android" then cellFactor=2 end
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/cellFactor)
+    love.graphics.setLineWidth(7)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
+    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+
+    --victory label
+    local x = screenw/2-width/2
+    local y = screenh/2-height/2+15
+    local ySpacing = 12
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Estatísticas",cardfont,x,y,width,"center")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    y=y+ySpacing
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Menor tempo",cardfont,x+10,y,width,"left")
+    local text = save.lowTime
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.printf("Maior tempo",cardfont,x+10,y,width,"left")
+    local text = save.highTime
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.printf("Tempo total",cardfont,x+10,y,width,"left")
+    local text = save.totalTime
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    love.graphics.setColor(1,1,1)
+    y=y+ySpacing
+    love.graphics.printf("Partidas jogadas",cardfont,x+10,y,width,"left")
+    local text = save.totalGames
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.printf("Partidas ganhas",cardfont,x+10,y,width,"left")
+    local text = save.totalWins
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    y=y+cardfontsize+ySpacing
+    love.graphics.printf("Partidas perdidas",cardfont,x+10,y,width,"left")
+    local text = save.totalLoss
+    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+
+    --botão de jogar denovo
+    local nw = cardfont:getWidth("Voltar")+30
+    local nh = height/6
+    local x = screenw/2-nw/2
+    local y = screenh/2+height/2-nh-15
+    love.graphics.setLineWidth(5)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",x,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",x,y,nw,nh,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.printf("Voltar",cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+    love.graphics.setLineWidth(oldThick)
+end
+
 --Adds a card at the bottom of a list
 function addCardToList(listnumber,number,suit,visible)
     local index=0
@@ -1042,6 +1127,7 @@ function storeCollision(mx,my)
                 v["index"] = k
                 if v.bought then
                     cardBack=v.img
+                    save.backCard=v.imgName
                     inStore=false
                     return "card"
                 end
@@ -1062,6 +1148,7 @@ function storeCollision(mx,my)
                 v["index"] = k
                 if v.bought then
                     changeBack(v.img)
+                    save.backImg=v.imgName
                     inStore=false
                     return "card"
                 end
@@ -1112,6 +1199,7 @@ function storePromptCollision(mx,my)
     end
 end
 
+--Collision of the victory screen
 function victoryCollision(mx,my)
     local cellFactor = 2.60
     if system=="Android" then cellFactor=2 end
@@ -1123,6 +1211,27 @@ function victoryCollision(mx,my)
     local y = screenh/2+height/2-nh-15
     if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
         return "new"
+    end
+    x = screenw/2-width/2
+    y = screenh/2-height/2
+    if mx >= x and mx <= x+width and my >= y and my <= y+height then 
+    else
+        return "outside"
+    end
+end
+
+--Collision for the stats screen
+function statsCollision(mx,my)
+    local cellFactor = 2.60
+    if system=="Android" then cellFactor=2 end
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/cellFactor)
+    local nw = cardfont:getWidth("Voltar")+30
+    local nh = height/6
+    local x = screenw/2-nw/2
+    local y = screenh/2+height/2-nh-15
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "outside"
     end
     x = screenw/2-width/2
     y = screenh/2-height/2
@@ -1227,7 +1336,7 @@ function pressButton(btn)
     if btn==1 then --UNDO
         getUndo()
     elseif btn==2 then --STATS
-        --changeBack()
+        statsButton()
     elseif btn==3 then --NEW
         playSound("new")
         startGame()
@@ -1403,6 +1512,11 @@ function storeButton()
     inStore = not inStore
 end
 
+--Inverts inStats
+function statsButton()
+    inStats = not inStats
+end
+
 --Splits strings into a table of strings based on a separator char
 function split(str, sep)
     local result = {}
@@ -1469,34 +1583,30 @@ end
 
 --Resets all fonts to a new font size
 function resetAllFonts()
-    cardStyle.font = love.graphics.newFont(cardStyle.font,cardfontsize)
+    cardStyle.font = love.graphics.newFont(cardStyle.fontName,cardfontsize)
     for k,v in ipairs(storeItems) do
-        v.font = love.graphics.newFont(v.font,cardfontsize)
+        v.font = love.graphics.newFont(v.fontName,cardfontsize)
     end
     for k,v in ipairs(storeCB) do
-        v.font = love.graphics.newFont(v.font,cardfontsize)
+        v.font = love.graphics.newFont(v.fontName,cardfontsize)
     end
     for k,v in ipairs(storeBacks) do
-        v.font = love.graphics.newFont(v.font,cardfontsize)
+        v.font = love.graphics.newFont(v.fontName,cardfontsize)
     end
 end
 
---Changes the background image (not complete, not taking input)
+function resetImages()
+    for k,v in ipairs(storeCB) do
+        v.img = love.graphics.newImage(v.imgName)
+    end
+    for k,v in ipairs(storeBacks) do
+        v.img = love.graphics.newImage(v.imgName)
+    end
+end
+
+--Changes the background image
 function changeBack(img)
     backgroundImg=img
-end
-
---Loads the stats from the love filesystem saves
-function loadSave()
-    local obj = {}
-    if love.filesystem.getInfo("save.json") then
-        for line in love.filesystem.lines("save.json") do
-            obj[#obj+1] = json.decode(line)
-        end
-        save = obj
-    else
-        love.filesystem.newFile("save.json")
-    end
 end
 
 -- see if the file exists
@@ -1622,4 +1732,45 @@ end
 function playSound(sfx)
     local sound = sounds[sfx]:clone()
     love.audio.play(sound)
+end
+
+function love.quit()
+    local success = saveGame()
+    if success then
+        return false
+    else
+        return true
+    end
+end
+
+function saveGame()
+    local svFile = json.encode(save)
+    local success, message = love.filesystem.write("save",svFile)
+    svFile = json.encode(storeItems)
+    local success1, message = love.filesystem.write("storeItems",svFile)
+    svFile = json.encode(storeCB)
+    local success2, message = love.filesystem.write("storeCB",svFile)
+    svFile = json.encode(storeBacks)
+    local success3, message = love.filesystem.write("storeBacks",svFile)
+    svFile = json.encode(cardStyle)
+    local success4, message = love.filesystem.write("cardStyle",svFile)
+    return success and success1 and success2 and success3 and success4
+end
+
+function readSave()
+    local check = love.filesystem.getInfo("save")
+    if check then
+        local temp, size = love.filesystem.read("save")
+        local tmp = love.filesystem.read("storeItems")
+        storeItems = json.decode(tmp)
+        tmp = love.filesystem.read("storeCB")
+        storeCB = json.decode(tmp)
+        tmp = love.filesystem.read("storeBacks")
+        storeBacks = json.decode(tmp)
+        tmp = love.filesystem.read("cardStyle")
+        cardStyle = json.decode(tmp)
+        return json.decode(temp)
+    else
+        return nil
+    end
 end
