@@ -82,6 +82,8 @@ currentMins = 0
 currentCD = 0
 timePunish = 0
 
+clickSendCD = 0
+
 cardStyle = {
     color={1,1,1},
         textcolor={0,0,0},
@@ -159,6 +161,7 @@ function love.update(dt)
     if love.mouse.isDown(1)==false then
         if cardonhand==nil then
         else
+            clickSendCD = clickSendCD+dt
             local pile = checkPile(mousex,mousey)
             local baselist = checkForList(mousex,mousey)
             local card,list,index = checkCollisionTwo(mousex,mousey)
@@ -797,8 +800,8 @@ function drawVictory()
     local sec=tostring(currentSecs)
     if tonumber(sec)<10 then sec="0"..sec end
     local text = currentMins..":"..sec
-    if timeBonus>0 then text = "Bônus! +"..timeBonus.." "..text end
-    if timeBonus<0 then text = "Penalidade! "..timeBonus.." "..text end
+    if timeBonus>0 then text = timeBonus.." "..text end
+    if timeBonus<0 then text = timeBonus.." "..text end
     love.graphics.printf(text,cardfont,x,y,width-10,"right")
     y=y+cardfontsize+ySpacing
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -807,8 +810,8 @@ function drawVictory()
     love.graphics.setColor(1,1,1)
     love.graphics.printf("Movimentos",cardfont,x+10,y,width,"left")
     local text = save.moves
-    if movBonus>0 then text = "Bônus! +"..movBonus.." "..text end
-    if movBonus<0 then text = "Penalidade! "..movBonus.." "..text end
+    if movBonus>0 then text = movBonus.." "..text end
+    if movBonus<0 then text = movBonus.." "..text end
     love.graphics.printf(text,cardfont,x,y,width-10,"right")
     y=y+cardfontsize+ySpacing
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -1367,6 +1370,9 @@ end
 --Returns the cardonhand to where it used to be, 
 -- used when the cardonhand lands on a bad spot
 function returnCard()
+    if clickSendCD<0.35 then
+        local checkPiles = 
+    end
     if cardonhand.lastlist=="litter" then
         cardlitter[#cardlitter+1]=cardonhand[1]
     elseif string.match(cardonhand.lastlist,"pile") then
@@ -1820,6 +1826,7 @@ function statsUpdate()
     local totalTime = split(save.totalTime,":")
     totalTime[1]=tonumber(totalTime[1])+currentMins
     totalTime[2]=tonumber(totalTime[2])+currentSecs
+    if totalTime[2]>=60 then totalTime[2]=totalTime[2]-60;totalTime[1]=totalTime[1]+1 end
     save.totalTime=totalTime[1]..":"..formatSecs(totalTime[2])
 
     if save.points>save.highScore then save.highScore=save.points end
