@@ -253,6 +253,7 @@ function love.mousepressed(x, y, button, istouch)
         if inStats==false and inStore==false and inVictory==false then
             if cardonhand==nil then
                 if wonGame==false then
+                    clickSendCD=0
                     local card,list,index = checkCollision(x,y)
                     local pile = checkPile(x,y)
                     if card then
@@ -1371,7 +1372,33 @@ end
 -- used when the cardonhand lands on a bad spot
 function returnCard()
     if clickSendCD<0.35 then
-        local checkPiles = 
+        local pile = checkPiles()
+        local list = checkLists()
+        if pile~=false then
+            cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
+            local behindHidden = makeVisible()
+            putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
+            cardonhand=nil
+            checkVictory()
+            addPoints(15)
+            playSound("move")
+            clickSendCD=0
+            return nil
+        elseif list~=false then
+            local index = #cardlists[list]
+            local newIndex = index+1
+            for i,v in ipairs(cardonhand) do
+                v.visible=true
+                cardlists[list][index+i] = v
+            end
+            local behindHidden = makeVisible()
+            putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex,behindHidden)
+            cardonhand=nil
+            addPoints(2)
+            playSound("move")
+            clickSendCD=0
+            return nil
+        end
     end
     if cardonhand.lastlist=="litter" then
         cardlitter[#cardlitter+1]=cardonhand[1]
@@ -1390,7 +1417,42 @@ function returnCard()
             cardlists[cardonhand.lastlist][index+i] = v
         end
     end
+    clickSendCD=0
     return nil
+end
+
+--checks if cardonhand can move to any pile
+function checkPiles()
+    if #cardonhand>1 then return false end
+    local coh = cardonhand[1]
+    if coh.number=="A" then
+        cardpile[#cardpile+1] = {}
+        return #cardpile
+    end
+    for k,v in ipairs(cardpile) do
+        local card = v[#v]
+        print(card.number)
+        if checkIfPost(card.number,coh.number) and coh.suit==card.suit then
+            return k
+        end
+    end
+    return false
+end
+
+--checks if cardonhand can move to a list
+function checkLists()
+    local coh = cardonhand[1]
+    for k,v in ipairs(cardlists) do
+        if #v>0 then
+            local card = v[#v]
+            if checkIfPost(coh.number,card.number) and checkOpposite(card.suit,coh.suit) then
+                return k
+            end
+        elseif cardonhand[1].number=="K" then
+            return k
+        end
+    end
+    return false
 end
 
 --Makes the last card of the last list of the cardonhand visible
