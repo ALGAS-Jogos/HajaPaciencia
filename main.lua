@@ -1372,7 +1372,7 @@ end
 -- used when the cardonhand lands on a bad spot
 function returnCard()
     if clickSendCD<0.35 then
-        local pile = checkPiles()
+        local pile = checkPiles(cardonhand)
         local list = checkLists()
         if pile~=false then
             cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
@@ -1422,9 +1422,8 @@ function returnCard()
 end
 
 --checks if cardonhand can move to any pile
-function checkPiles()
-    if #cardonhand>1 then return false end
-    local coh = cardonhand[1]
+function checkPiles(coh)
+    if #coh>1 then return false end
     if coh.number=="A" then
         cardpile[#cardpile+1] = {}
         return #cardpile
@@ -1710,6 +1709,21 @@ function linesFrom(file)
         lines[#lines + 1] = line
     end
     return lines
+end
+
+--checks if all cards in lists are visible and does shit accordingly
+function checkAllVisible()
+    for k,v in ipairs(cardlists) do
+        for i,c in ipairs(v) do
+            if c.visible==false then return false end
+        end
+    end
+
+    --start winning game
+    for k,v in ipairs(cardlists) do
+        local card=v[#v]
+        local pile = checkPiles()
+    end
 end
 
 --Checks all the piles for Kings in their last positions
