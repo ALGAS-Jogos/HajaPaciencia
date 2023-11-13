@@ -2,6 +2,8 @@ love.graphics.setDefaultFilter("linear","linear",10)
 
 require("utils.json")
 require("store.store")
+require("utils.draw")
+require("utils.utils")
 
 ordem = {"K","Q","J",10,9,8,7,6,5,4,3,2,"A"}
 cnaipes = {"spades","diamonds","clubs","hearts"}
@@ -168,7 +170,7 @@ function love.update(dt)
             local pile = checkPile(mousex,mousey)
             local baselist = checkForList(mousex,mousey)
             local card,list,index = checkCollisionTwo(mousex,mousey)
-            if card then
+            if card and list~=cardonhand.lastlist then
                 if checkOpposite(card.suit,cardonhand[1].suit) and checkIfPost(cardonhand[1].number,card.number) then                    
                     local newIndex = index+1
                     for i,v in ipairs(cardonhand) do
@@ -477,490 +479,6 @@ function love.draw()
     if inStats then drawStats() end
     if inVictory then drawVictory() end
     if allVisible then drawAllVisible() end
-end
-
-function drawTime()
-    local text = "Tempo: "..save.currentTime
-    love.graphics.setColor(0,0,0,0.5)
-    love.graphics.rectangle("fill",screenw-cardfont:getWidth(text)-10,-5,cardfont:getWidth(text)+15,cardfontsize+7,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.print(text,cardfont,screenw-cardfont:getWidth(text)-5,0)
-end
-
-function drawMoves()
-    local text = "Movs: "..save.moves
-    love.graphics.setColor(0,0,0,0.5)
-    love.graphics.rectangle("fill",screenw/2-cardfont:getWidth(text)/2-10,-5,cardfont:getWidth(text)+15,cardfontsize+7,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.print(text,cardfont,screenw/2-cardfont:getWidth(text)/2-5,0)
-end
-
-function drawPoints()
-    local text = "Pontos: "..save.points
-    love.graphics.setColor(0,0,0,0.5)
-    love.graphics.rectangle("fill",-5,-5,cardfont:getWidth(text)+7,cardfontsize+7,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.print(text,cardfont,0,0)
-    
-end
-
-function drawButtons()
-    --love.graphics.setColor(0,0,0,0.5)
-    local androidFactor = 0.25
-    if system=="Android" then androidFactor=0.15 end    
-
-    local buttonWidth = 256*androidFactor -- Largura dos botões (ajuste conforme necessário)
-    local buttonHeight = 256*androidFactor -- Altura dos botões (ajuste conforme necessário)
-    local minPadding = 10 -- Espaçamento entre os botões (ajuste conforme necessário)
-    local numButtons = #buttons
-
-     -- Calcula o total de largura ocupada pelos botões
-    -- Calcula a largura total ocupada pelos botões
-    local totalButtonsWidth = numButtons * buttonWidth
-
-    -- Calcula o padding necessário para centralizar os botões
-    local totalPadding = math.max((screenw - totalButtonsWidth) / (numButtons + 1), minPadding)
-
-    -- Calcula a posição x inicial para o primeiro botão
-    local xStart = (screenw - (totalButtonsWidth + totalPadding * (numButtons - 1))) / 2
-
-
-    -- Calcula a posição y dos botões colados na parte inferior da tela
-    local y = screenh - buttonHeight - 20
-
-    love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.rectangle("fill", 0, y, screenw, screenh-y)
-    love.graphics.setColor(1, 1, 1, 1)
-
-    for i, btn in ipairs(buttons) do
-        local x = xStart + (i - 1) * (buttonWidth + totalPadding)
-        love.graphics.draw(btn.img, x, y + 10, 0, androidFactor)
-    end
-end
-
-function drawCard(number,suit,x,y)
-    local colortext = cardStyle.textcolor
-    local colorsuit = cardStyle.suitcolor
-    if suit=="diamonds" or suit=="hearts" then
-        colortext=cardStyle.casered
-        colorsuit=cardStyle.casered
-    end
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(cardStyle.color)
-    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
-    if cardStyle.backImg then
-        local imgw, imgh = cardStyle.backImg:getDimensions()
-        local scaleX = cardw/imgw
-        local scaleY = cardh/imgh
-        love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
-    end
-    love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),cardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
-    love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
-    love.graphics.setColor(colorsuit)
-
-    local smallSuitSize = suitSize-(suitSize*0.6)
-    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
-    local offset = 95*smallSuitSize
-    local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
-
-    local insideSuitSize = suitSize
-    if suit=="spades" and number=="A" then
-        insideSuitSize=insideSuitSize+0.20
-        if system=="Android" then insideSuitSize=insideSuitSize-0.15 end
-        y=y-5
-    end
-    love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
-    love.graphics.setColor(1,1,1)
-end
-
-function drawBack(x,y)
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(1,1,1)
-    GLOBALBACKX, GLOBALBACKY = x,y
-    love.graphics.stencil(stencilRounded)
-    love.graphics.setStencilTest("greater",0)
-    local scaleX,scaleY = cardBack:getDimensions()
-    scaleX=cardw/scaleX
-    scaleY=cardh/scaleY
-    love.graphics.draw(cardBack,x,y,0,scaleX,scaleY)
-    love.graphics.setStencilTest()
-    love.graphics.setColor(1,1,1)
-end
-
-function stencilRounded()
-    love.graphics.rectangle("fill",GLOBALBACKX,GLOBALBACKY,cardw,cardh,round)
-end
-
-function drawStore()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.8)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
-    --draw the base rectangle and its border
-    local width = screenw-(screenw/8)
-    local height = screenh-(screenh/3)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setLineWidth(oldThick)
-    if storeState==1 then
-        for k,v in ipairs(storeItems) do
-            local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
-            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-            storeDrawCard("K","spades",x,y,v)
-            love.graphics.setLineWidth(4)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.setLineWidth(oldThick)
-            if v.bought==false then
-                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
-            else
-                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
-            end
-        end
-    elseif storeState==2 then
-        for k,v in ipairs(storeCB) do
-            local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
-            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-            storeDrawBack(x,y,v.img)
-            love.graphics.setLineWidth(4)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.setLineWidth(oldThick)
-            if v.bought==false then
-                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
-            else
-                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
-            end
-        end
-    elseif storeState==3 then
-        for k,v in ipairs(storeBacks) do
-            local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
-            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-            storeDrawBack(x,y,v.img)
-            love.graphics.setLineWidth(4)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.setLineWidth(oldThick)
-            if v.bought==false then
-                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
-            else
-                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
-            end
-        end
-    end
-    
-    --Dock render
-    love.graphics.setColor(0,0,0,0.8)
-    local imgw, imgh = coinImg:getDimensions()
-    local scale = (height/8-10)/imgh
-    local dockw,dockh = cardfont:getWidth(tostring(save.coins))+(imgw*scale)+15,height/8
-    local dockx,docky = screenw/2-width/2+15, screenh/2-height/2+height-dockh-15
-    love.graphics.rectangle("fill",dockx,docky,dockw,dockh,10)
-    love.graphics.setColor(0.7,0.7,0.2,1)
-    love.graphics.draw(coinImg, dockx+5, docky+5, 0, scale)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.print(tostring(save.coins),cardfont,dockx+(coinImg:getWidth()*scale)+5,docky+(math.abs(cardfontsize-dockh))/2)
-
-    --Buttons
-    for i=1,3 do
-        local nw = cardfont:getWidth(storeButtons[1])+15
-        local nh = cardfontsize+10
-        local x = screenw/2+width/2-nw-5
-        local y = screenh/2-height/2+height-dockh-(nh+5)*(i-1)
-        if i==storeState then
-            love.graphics.setLineWidth(6)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y,nw,nh,5)
-        end
-        love.graphics.setColor(0, 0.239, 0.063)
-        love.graphics.rectangle("fill",x,y,nw,nh,5)
-        love.graphics.setColor(1,1,1,1)
-        love.graphics.printf(storeButtons[i],cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
-    end
-    love.graphics.setLineWidth(oldThick)
-end
-
-function drawStorePrompt()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
-    --draw the base rectangle and its border
-    local cellFactor = 2
-    if system=="Android" then cellFactor=1.60 end
-    local width = screenw-(screenw/4)
-    local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
-
-    love.graphics.setLineWidth(oldThick)
-    if storeState==1 then
-        local naipesDraw = {"spades","hearts","clubs","diamonds"}
-        for k,v in ipairs(naipesDraw) do
-            local spacing = ((width-cardw*4))/4
-            local otherSpacing = ((screenw/2-width/2+(4)*(cardw+spacing))-width)/4
-            --if k>1 then otherSpacing=0 end
-            local x = screenw/2-width/2+(k-1)*(cardw+spacing) + otherSpacing
-            local y = screenh/2-height/2 + height/10
-            storeDrawCard("A",v,x,y,inStorePrompt)
-        end
-    elseif storeState==2 then
-        local x = screenw/2-cardw/2
-        local y = screenh/2-height/2 + height/10
-        storeDrawBack(x,y,inStorePrompt.img)
-    elseif storeState==3 then
-        local x = screenw/2-cardw/2
-        local y = screenh/2-height/2 + height/10
-        storeDrawBack(x,y,inStorePrompt.img)
-    end
-
-    local text = "Comprar"
-    if save.coins<inStorePrompt.price then text="Sem dinheiro" end
-    local nw = cardfont:getWidth(text)+30
-    local nh = height/6
-    local x = screenw/2-nw/2
-    local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
-
-
-    local newColor = {inStorePrompt.color[1],inStorePrompt.color[2],inStorePrompt.color[3]}
-    y=y-nh*1.5
-    nw=inStorePrompt.font:getWidth(inStorePrompt.name)+30
-    x = screenw/2-nw/2
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(inStorePrompt.textcolor)
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(newColor)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(inStorePrompt.textcolor)
-    love.graphics.printf(inStorePrompt.name,inStorePrompt.font,x,y+(nh-cardfontsize)/2,nw,"center")
-    love.graphics.setLineWidth(oldThick)
-end
-
-function drawAllVisible()
-    local androidFactor = 0.25
-    if system=="Android" then androidFactor=0.15 end    
-    local buttonHeight = 256*androidFactor -- Altura dos botões (ajuste conforme necessário)
-    local text = "Ganhar"
-    local nw = cardfont:getWidth(text)+45
-    local nh = cardfont:getHeight()+15
-    local x = screenw/2-nw/2
-    local y = screenh-nh-buttonHeight-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
-    love.graphics.setLineWidth(oldThick)
-end
-
-function drawVictory()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
-    --draw the base rectangle and its border
-    local cellFactor = 2.60
-    if system=="Android" then cellFactor=2 end
-    local width = screenw-(screenw/4)
-    local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
-
-    --some of the calculus
-    local timeBonus = 0
-    local movBonus = 0
-    local totalSecs = currentMins*60+currentSecs
-    if totalSecs<=150 then
-        timeBonus=15
-    elseif totalSecs>=240 and totalSecs<=480 then
-        timeBonus=-5
-    elseif totalSecs>480 then
-        timeBonus=-15
-    end
-    if save.moves<=100 then
-        movBonus=15
-    elseif save.moves>300 then
-        movBonus=-25
-    end
-
-    --victory label
-    local x = screenw/2-width/2
-    local y = screenh/2-height/2+15
-    local ySpacing = 12
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Vitória!",cardfont,x,y,width,"center")
-    y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Tempo",cardfont,x+10,y,width,"left")
-    local sec=tostring(currentSecs)
-    if tonumber(sec)<10 then sec="0"..sec end
-    local text = currentMins..":"..sec
-    if timeBonus>0 then text = "+"..timeBonus.." "..text end
-    if timeBonus<0 then text = timeBonus.." "..text end
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Movimentos",cardfont,x+10,y,width,"left")
-    local text = save.moves
-    if movBonus>0 then text = "+"..movBonus.." "..text end
-    if movBonus<0 then text = movBonus.." "..text end
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Pontos",cardfont,x+10,y,width,"left")
-    local text = save.points
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Moedas",cardfont,x+10,y,width,"left")
-    local text = "+"..victoryCoins
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-
-    --botão de jogar denovo
-    local nw = cardfont:getWidth("Jogar denovo")+30
-    local nh = height/6
-    local x = screenw/2-nw/2
-    local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("Jogar denovo",cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
-    love.graphics.setLineWidth(oldThick)
-end
-
-function drawStats()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
-    --draw the base rectangle and its border
-    local cellFactor = 3
-    if system=="Android" then cellFactor=2 end
-    local width = screenw-(screenw/4)
-    local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
-
-    --victory label
-    local x = screenw/2-width/2
-    local y = screenh/2-height/2+15
-    local ySpacing = 12
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Estatísticas",cardfont,x,y,width,"center")
-    y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Menor tempo",cardfont,x+10,y,width,"left")
-    local text = save.lowTime
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.printf("Maior tempo",cardfont,x+10,y,width,"left")
-    local text = save.highTime
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.printf("Tempo total",cardfont,x+10,y,width,"left")
-    local text = save.totalTime
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    love.graphics.setColor(1,1,1)
-    y=y+ySpacing
-    love.graphics.printf("Partidas jogadas",cardfont,x+10,y,width,"left")
-    local text = save.totalGames
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.printf("Partidas ganhas",cardfont,x+10,y,width,"left")
-    local text = save.totalWins
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.printf("Partidas perdidas",cardfont,x+10,y,width,"left")
-    local text = save.totalLoss
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-    y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    love.graphics.setColor(1,1,1)
-    y=y+ySpacing
-    love.graphics.printf("Maior pontuação",cardfont,x+10,y,width,"left")
-    local text = save.highScore
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
-
-    --botão de jogar denovo
-    local nw = cardfont:getWidth("Voltar")+30
-    local nh = cardfont:getHeight()+10
-    local x = screenw/2-nw/2
-    local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("Voltar",cardfont,x,y+5,nw,"center")
-    love.graphics.setLineWidth(oldThick)
 end
 
 --Adds a card at the bottom of a list
@@ -1306,7 +824,7 @@ function allVisibleCollision(mx,my)
     local nw = cardfont:getWidth(text)+45
     local nh = cardfont:getHeight()+15
     local x = screenw/2-nw/2
-    local y = screenh-nh-buttonHeight-15
+    local y = screenh-nh-buttonHeight-20-15
     if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
         return "clicked"
     end
@@ -1428,7 +946,7 @@ end
 --Returns the cardonhand to where it used to be, 
 -- used when the cardonhand lands on a bad spot
 function returnCard()
-    if clickSendCD<0.75 then
+    if clickSendCD<0.5 then
         local pile = checkPiles(cardonhand)
         local list = checkLists(cardonhand)
         if pile~=false then
@@ -1499,13 +1017,14 @@ end
 --checks if cardonhand can move to a list
 function checkLists(ch)
     local coh = ch[1]
+    local last = ch.lastlist or "pass"
     for k,v in ipairs(cardlists) do
         if #v>0 then
             local card = v[#v]
-            if checkIfPost(coh.number,card.number) and checkOpposite(card.suit,coh.suit) then
+            if checkIfPost(coh.number,card.number) and checkOpposite(card.suit,coh.suit) and (last=="pass" or last~=k) then
                 return k
             end
-        elseif cardonhand[1].number=="K" then
+        elseif coh.number=="K" then
             return k
         end
     end
@@ -1660,70 +1179,6 @@ function statsButton()
     inStats = not inStats
 end
 
---Splits strings into a table of strings based on a separator char
-function split(str, sep)
-    local result = {}
-    local regex = ("([^%s]+)"):format(sep)
-    for each in string.gmatch(str,regex) do
-       table.insert(result, each)
-    end
-    return result
-end
-
---Same as drawCard but it also takes a cardStyle input
-function storeDrawCard(number,suit,x,y,cardStyle)
-    local colortext = cardStyle.textcolor
-    local colorsuit = cardStyle.suitcolor
-    if suit=="diamonds" or suit=="hearts" then
-        colortext=cardStyle.casered
-        colorsuit=cardStyle.casered
-    end
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(cardStyle.color)
-    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
-    if cardStyle.backImg then
-        local imgw, imgh = cardStyle.backImg:getDimensions()
-        local scaleX = cardw/imgw
-        local scaleY = cardh/imgh
-        love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
-    end
-    love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),cardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
-    love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
-    love.graphics.setColor(colorsuit)
-
-    local smallSuitSize = suitSize-(suitSize*0.6)
-    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
-    local offset = 95*smallSuitSize
-    local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
-
-    local insideSuitSize = suitSize
-    if suit=="spades" and number=="A" then
-        insideSuitSize=insideSuitSize+0.20
-        y=y-5
-    end
-    love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
-    love.graphics.setColor(1,1,1)
-end
-
---Same as drawBack but it also takes an image as a back image
-function storeDrawBack(x,y,img)
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(1,1,1)
-    GLOBALBACKX, GLOBALBACKY = x,y
-    love.graphics.stencil(stencilRounded)
-    love.graphics.setStencilTest("greater",0)
-    local scaleX,scaleY = img:getDimensions()
-    scaleX=cardw/scaleX
-    scaleY=cardh/scaleY
-    love.graphics.draw(img,x,y,0,scaleX,scaleY)
-    love.graphics.setStencilTest()
-    love.graphics.setColor(1,1,1)
-end
-
 --Resets all fonts to a new font size
 function resetAllFonts()
     cardStyle.font = love.graphics.newFont(cardStyle.fontName,cardfontsize)
@@ -1750,34 +1205,6 @@ end
 --Changes the background image
 function changeBack(img)
     backgroundImg=img
-end
-
--- see if the file exists
-function file_exists(file)
-    local f = io.open(file, "rb")
-    if f then f:close() end
-    return f ~= nil
-end
-  
--- get all lines from a file, returns an empty 
--- list/table if the file does not exist
-function linesFrom(file)
-    if not file_exists(file) then return {} end
-    local lines = {}
-    for line in io.lines(file) do 
-        lines[#lines + 1] = line
-    end
-    return lines
-end
-
---checks if all cards in lists are visible and does shit accordingly
-function checkAllVisible()
-    for k,v in ipairs(cardlists) do
-        for i,c in ipairs(v) do
-            if c.visible==false then return false end
-        end
-    end
-   return true
 end
 
 --Checks all the piles for Kings in their last positions
@@ -1820,16 +1247,6 @@ function calculateVictory()
     save.coins=save.coins+victoryCoins
 end
 
---Takes points away from player
-function deductPoints(num)
-    save.points=math.max(0,save.points-num)
-end
-
---Adds points to the player
-function addPoints(num)
-    save.points=save.points+num
-end
-
 --Update the timer including the 0 in the seconds
 function updateTime()
     currentSecs=currentSecs+1
@@ -1846,32 +1263,6 @@ end
 
 --Does all the funky stuff and shuffles the deck and sets a new board
 function addCards()
-    local cards = allCards()
-    for i=1,4 do
-        for j=1,13 do
-            local naipe = (i+j)%4
-            local number = j
-            if naipe==0 then naipe=4 end
-            print(ordem[number], cnaipes[naipe])
-            if j<9 then
-                if cardlists[i%4+1] then
-                    addCardToList(i%4+1,ordem[number],cnaipes[naipe],true)
-                else
-                    cardlists[i%4+1] = {}
-                    addCardToList(i%4+1,ordem[number],cnaipes[naipe],true)
-                end
-            else
-                cardstacks[#cardstacks+1] = {number=ordem[number],suit=cnaipes[naipe]}
-            end
-            if i==4 and j==13 then
-                return false
-            end
-        end
-    end
-
-
-
-
     local cards = allCards()
     local limit = 28
     local hardSetting = 50
@@ -1911,12 +1302,6 @@ function addCards()
     for i=1,7 do
         cardlists[i][#cardlists[i]].visible=true
     end
-end
-
---Plays a sound effect
-function playSound(sfx)
-    local sound = sounds[sfx]:clone()
-    love.audio.play(sound)
 end
 
 function love.quit()
@@ -1990,11 +1375,6 @@ function statsUpdate()
     if save.points>save.highScore then save.highScore=save.points end
 end
 
-function formatSecs(secs)
-    if tonumber(secs)<10 then return "0"..tostring(secs) end
-    return tostring(secs)
-end
-
 function allVisibleMakeMove()
     for k,v in ipairs(cardlists) do
         if #v>0 then
@@ -2052,3 +1432,31 @@ function allVisibleMakeMove()
         end
     end
 end
+
+function unusedAddCards()
+    local cards = allCards()
+    for i=1,4 do
+        for j=1,13 do
+            local naipe = (i+j)%4
+            local number = j
+            if naipe==0 then naipe=4 end
+            print(ordem[number], cnaipes[naipe])
+            if j<9 then
+                if cardlists[i%4+1] then
+                    addCardToList(i%4+1,ordem[number],cnaipes[naipe],true)
+                else
+                    cardlists[i%4+1] = {}
+                    addCardToList(i%4+1,ordem[number],cnaipes[naipe],true)
+                end
+            else
+                cardstacks[#cardstacks+1] = {number=ordem[number],suit=cnaipes[naipe]}
+            end
+            if i==4 and j==13 then
+                return false
+            end
+        end
+    end
+end
+
+
+
