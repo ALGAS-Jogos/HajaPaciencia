@@ -51,6 +51,9 @@ inStats = false
 inVictory = false
 
 wonGame = false
+allVisible = false
+winning = false
+winningCD = 0
 
 victoryCoins = 0
 
@@ -103,7 +106,7 @@ love.math.setRandomSeed(os.time())
 random = love.math.random
 
 sounds = {
-    move = love.audio.newSource("sfx/move.mp3","static"),
+    move = love.audio.newSource("sfx/newmove.mp3","static"),
     new = love.audio.newSource("sfx/new.mp3","static"),
     victory = love.audio.newSource("sfx/victory.mp3","static")
 }
@@ -233,6 +236,16 @@ function love.update(dt)
             end
         end
     end
+
+    if winning then
+        winningCD=winningCD+dt
+        if winningCD>=0.1 then
+            winningCD=winningCD-0.1
+            allVisibleMakeMove()
+            checkVictory()
+        end
+    end
+
     if inVictory==false and inStats==false and inStore==false and wonGame==false then
         currentCD=currentCD+dt
         timePunish=timePunish+dt
@@ -250,7 +263,7 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if button == 1 then 
-        if inStats==false and inStore==false and inVictory==false then
+        if inStats==false and inStore==false and inVictory==false and allVisible==false then
             if cardonhand==nil then
                 if wonGame==false then
                     clickSendCD=0
@@ -361,6 +374,13 @@ function love.mousepressed(x, y, button, istouch)
             elseif whatButton=="outside" then
                 inVictory=false
             end
+        elseif allVisible then
+            local whatButton = allVisibleCollision(x,y)
+            if whatButton=="clicked" then
+                winning=true
+                allVisible=false
+                winningCD=0
+            end
         end
     end
  end
@@ -456,6 +476,7 @@ function love.draw()
     if inStorePrompt then drawStorePrompt() end
     if inStats then drawStats() end
     if inVictory then drawVictory() end
+    if allVisible then drawAllVisible() end
 end
 
 function drawTime()
@@ -754,6 +775,25 @@ function drawStorePrompt()
     love.graphics.setLineWidth(oldThick)
 end
 
+function drawAllVisible()
+    local androidFactor = 0.25
+    if system=="Android" then androidFactor=0.15 end    
+    local buttonHeight = 256*androidFactor -- Altura dos botões (ajuste conforme necessário)
+    local text = "Ganhar"
+    local nw = cardfont:getWidth(text)+45
+    local nh = cardfont:getHeight()+15
+    local x = screenw/2-nw/2
+    local y = screenh-nh-buttonHeight-15
+    love.graphics.setLineWidth(5)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",x,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",x,y,nw,nh,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+    love.graphics.setLineWidth(oldThick)
+end
+
 function drawVictory()
     --grey the background out
     love.graphics.setColor(0,0,0,0.3)
@@ -801,7 +841,7 @@ function drawVictory()
     local sec=tostring(currentSecs)
     if tonumber(sec)<10 then sec="0"..sec end
     local text = currentMins..":"..sec
-    if timeBonus>0 then text = timeBonus.." "..text end
+    if timeBonus>0 then text = "+"..timeBonus.." "..text end
     if timeBonus<0 then text = timeBonus.." "..text end
     love.graphics.printf(text,cardfont,x,y,width-10,"right")
     y=y+cardfontsize+ySpacing
@@ -811,7 +851,7 @@ function drawVictory()
     love.graphics.setColor(1,1,1)
     love.graphics.printf("Movimentos",cardfont,x+10,y,width,"left")
     local text = save.moves
-    if movBonus>0 then text = movBonus.." "..text end
+    if movBonus>0 then text = "+"..movBonus.." "..text end
     if movBonus<0 then text = movBonus.." "..text end
     love.graphics.printf(text,cardfont,x,y,width-10,"right")
     y=y+cardfontsize+ySpacing
@@ -1258,6 +1298,21 @@ function statsCollision(mx,my)
     end
 end
 
+function allVisibleCollision(mx,my)
+    local androidFactor = 0.25
+    if system=="Android" then androidFactor=0.15 end    
+    local buttonHeight = 256*androidFactor -- Altura dos botões (ajuste conforme necessário)
+    local text = "Ganhar"
+    local nw = cardfont:getWidth(text)+45
+    local nh = cardfont:getHeight()+15
+    local x = screenw/2-nw/2
+    local y = screenh-nh-buttonHeight-15
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "clicked"
+    end
+    return ""
+end
+
 --Checks if the suits are opposite colors
 function checkOpposite(suitx,suity)
     local xcolor = 0
@@ -1314,6 +1369,8 @@ function startGame()
     currentCD=0
     timePunish=0
     save.moves=0
+    allVisible=false
+    winning=false
 end
 
 --Wipes the board
@@ -1371,9 +1428,9 @@ end
 --Returns the cardonhand to where it used to be, 
 -- used when the cardonhand lands on a bad spot
 function returnCard()
-    if clickSendCD<0.35 then
+    if clickSendCD<0.75 then
         local pile = checkPiles(cardonhand)
-        local list = checkLists()
+        local list = checkLists(cardonhand)
         if pile~=false then
             cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
             local behindHidden = makeVisible()
@@ -1422,8 +1479,9 @@ function returnCard()
 end
 
 --checks if cardonhand can move to any pile
-function checkPiles(coh)
-    if #coh>1 then return false end
+function checkPiles(ch)
+    if #ch>1 then return false end
+    local coh = ch[1]
     if coh.number=="A" then
         cardpile[#cardpile+1] = {}
         return #cardpile
@@ -1439,8 +1497,8 @@ function checkPiles(coh)
 end
 
 --checks if cardonhand can move to a list
-function checkLists()
-    local coh = cardonhand[1]
+function checkLists(ch)
+    local coh = ch[1]
     for k,v in ipairs(cardlists) do
         if #v>0 then
             local card = v[#v]
@@ -1463,6 +1521,7 @@ function makeVisible()
             cardlists[cardonhand.lastlist][#cardlists[cardonhand.lastlist]].visible = true
         end
     end
+    allVisible = checkAllVisible()
     return vis
 end
 
@@ -1718,12 +1777,7 @@ function checkAllVisible()
             if c.visible==false then return false end
         end
     end
-
-    --start winning game
-    for k,v in ipairs(cardlists) do
-        local card=v[#v]
-        local pile = checkPiles()
-    end
+   return true
 end
 
 --Checks all the piles for Kings in their last positions
@@ -1737,6 +1791,8 @@ function checkVictory()
         statsUpdate()
         save.totalWins=save.totalWins+1
         wonGame=true
+        winning=false
+        allVisible=false
         playSound("victory")
         inVictory=true
     end
@@ -1790,6 +1846,32 @@ end
 
 --Does all the funky stuff and shuffles the deck and sets a new board
 function addCards()
+    local cards = allCards()
+    for i=1,4 do
+        for j=1,13 do
+            local naipe = (i+j)%4
+            local number = j
+            if naipe==0 then naipe=4 end
+            print(ordem[number], cnaipes[naipe])
+            if j<9 then
+                if cardlists[i%4+1] then
+                    addCardToList(i%4+1,ordem[number],cnaipes[naipe],true)
+                else
+                    cardlists[i%4+1] = {}
+                    addCardToList(i%4+1,ordem[number],cnaipes[naipe],true)
+                end
+            else
+                cardstacks[#cardstacks+1] = {number=ordem[number],suit=cnaipes[naipe]}
+            end
+            if i==4 and j==13 then
+                return false
+            end
+        end
+    end
+
+
+
+
     local cards = allCards()
     local limit = 28
     local hardSetting = 50
@@ -1911,4 +1993,62 @@ end
 function formatSecs(secs)
     if tonumber(secs)<10 then return "0"..tostring(secs) end
     return tostring(secs)
+end
+
+function allVisibleMakeMove()
+    for k,v in ipairs(cardlists) do
+        if #v>0 then
+            local card=v[#v]
+            local pile = checkPiles({card})
+            if pile~=false then
+                cardpile[pile][#cardpile[pile]+1] = card
+                addPoints(15)
+                playSound("move")
+                save.moves=save.moves+1
+                table.remove(v,#v)
+                break
+            end
+        end
+    end
+    for i=1, #cardstacks+#cardlitter do
+        if #cardlitter>0 then
+            local card = cardlitter[#cardlitter]
+            local pile = checkPiles({card})
+            local list = checkLists({card})
+            if pile~=false then
+                cardpile[pile][#cardpile[pile]+1] = card
+                addPoints(15)
+                playSound("move")
+                save.moves=save.moves+1
+                table.remove(cardlitter,#cardlitter)
+                break
+            else
+                if #cardstacks>0 then
+                    local card = cardstacks[#cardstacks]
+                    cardlitter[#cardlitter+1] = card
+                    table.remove(cardstacks,#cardstacks)
+                    playSound("move")
+                    save.moves=save.moves+1
+                    break
+                else
+                    cardstacks = invertTable(cardlitter)
+                    cardlitter = {}
+                    save.moves=save.moves+1
+                    deductPoints(100)
+                end
+            end
+        elseif #cardstacks>0 then
+            local card = cardstacks[#cardstacks]
+            cardlitter[#cardlitter+1] = card
+            table.remove(cardstacks,#cardstacks)
+            playSound("move")
+            save.moves=save.moves+1
+            break
+        else
+            cardstacks = invertTable(cardlitter)
+            cardlitter = {}
+            deductPoints(100)
+            save.moves=save.moves+1
+        end
+    end
 end
