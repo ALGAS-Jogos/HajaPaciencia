@@ -1316,7 +1316,7 @@ end
 
 --Does all the funky stuff and shuffles the deck and sets a new board
 function addCards()
-    if unusedAddCards()==false then return true end
+    --if unusedAddCards()==false then return true end
     local cards = allCards()
     local limit = 28
     local hardSetting = 50
