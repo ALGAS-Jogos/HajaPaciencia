@@ -188,7 +188,7 @@ function love.update(dt)
                 else
                     cardonhand = returnCard()                
                 end
-            elseif pile and #cardonhand==1 then
+            elseif pile and #cardonhand==1 and cardonhand.lastlist~="pile"..pile then
                 if cardpile[pile] then
                     local lastCardPile = cardpile[pile][#cardpile[pile]]
                     if lastCardPile then --checa se a ultima carta não é nula
@@ -197,10 +197,10 @@ function love.update(dt)
                             
                             local behindHidden = makeVisible()
                             putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
-                            cardonhand=nil
                             checkVictory()
-                            addPoints(15)
+                            if string.sub(cardonhand.lastlist,1,4)~="pile" then addPoints(15) end
                             playSound("move")
+                            cardonhand=nil
                         else
                             cardonhand = returnCard()
                         end
@@ -213,8 +213,8 @@ function love.update(dt)
                         cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
                         local behindHidden = makeVisible()
                         putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
+                        if string.sub(cardonhand.lastlist,1,4)~="pile" then addPoints(15) end
                         cardonhand=nil
-                        addPoints(15)
                         playSound("move")
                     else
                         cardonhand = returnCard()
@@ -283,7 +283,7 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if button == 1 then 
-        if inStats==false and inStore==false and inVictory==false and allVisible==false then
+        if inStats==false and inStore==false and inVictory==false then
             if cardonhand==nil then
                 if wonGame==false then
                     clickSendCD=0
@@ -330,6 +330,7 @@ function love.mousepressed(x, y, button, istouch)
                                 forwardMoves = {}
                                 deductPoints(100)
                             end
+                            save.moves=save.moves+1
                             playSound("move")
                         else
                             local card = checkLitter(x,y)                    
@@ -394,13 +395,14 @@ function love.mousepressed(x, y, button, istouch)
             elseif whatButton=="outside" then
                 inVictory=false
             end
-        elseif allVisible then
-            local whatButton = allVisibleCollision(x,y)
-            if whatButton=="clicked" then
-                winning=true
-                allVisible=false
-                winningCD=0
-            end
+        end
+    end
+    if allVisible then
+        local whatButton = allVisibleCollision(x,y)
+        if whatButton=="clicked" then
+            winning=true
+            allVisible=false
+            winningCD=0
         end
     end
  end
@@ -988,7 +990,7 @@ function returnCard()
     if clickSendCD<0.5 then
         local pile = checkPiles(cardonhand)
         local list = checkLists(cardonhand)
-        if pile~=false then
+        if pile~=false and cardonhand.lastlist~="pile"..pile then
             cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
             local behindHidden = makeVisible()
             putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
@@ -1314,7 +1316,7 @@ end
 
 --Does all the funky stuff and shuffles the deck and sets a new board
 function addCards()
-    --if unusedAddCards()==false then return true end
+    if unusedAddCards()==false then return true end
     local cards = allCards()
     local limit = 28
     local hardSetting = 50
@@ -1441,10 +1443,10 @@ function allVisibleMakeMove()
                 local y = cardh-cardh+cardfontsize+5 + androidOverhead
                 local cardx = k * (cardw+androidInterSpacing) - androidSpacing
                 local cardy = #v * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
-                local m = math.atan2(y-(cardy+cardh/2),x-(cardx+cardw/2))
+                local m = math.atan2(y-(cardy),x-(cardx))
                 local width=35*math.cos(m)
                 local height=35*math.sin(m)
-                local temp = {cards={card},cardx=cardx+cardw/2,cardy=cardy+cardh/2,x=x,y=y,width=width,height=height}
+                local temp = {cards={card},cardx=cardx,cardy=cardy,x=x,y=y,width=width,height=height}
                 cardAnimate["pile"..pile] = temp
                 table.remove(v,#v)
                 break
