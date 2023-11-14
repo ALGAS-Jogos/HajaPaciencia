@@ -1314,6 +1314,7 @@ end
 
 --Does all the funky stuff and shuffles the deck and sets a new board
 function addCards()
+    --if unusedAddCards()==false then return true end
     local cards = allCards()
     local limit = 28
     local hardSetting = 50
@@ -1436,6 +1437,15 @@ function allVisibleMakeMove()
                 addPoints(15)
                 playSound("move")
                 save.moves=save.moves+1
+                local x = pile * (cardw+androidInterSpacing) - androidSpacing
+                local y = cardh-cardh+cardfontsize+5 + androidOverhead
+                local cardx = k * (cardw+androidInterSpacing) - androidSpacing
+                local cardy = #v * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
+                local m = math.atan2(y-(cardy+cardh/2),x-(cardx+cardw/2))
+                local width=35*math.cos(m)
+                local height=35*math.sin(m)
+                local temp = {cards={card},cardx=cardx+cardw/2,cardy=cardy+cardh/2,x=x,y=y,width=width,height=height}
+                cardAnimate["pile"..pile] = temp
                 table.remove(v,#v)
                 break
             end
@@ -1451,6 +1461,17 @@ function allVisibleMakeMove()
                 addPoints(15)
                 playSound("move")
                 save.moves=save.moves+1
+                local tempx = (5+#cardlitter%3+1) * (cardw+androidInterSpacing) - androidSpacing
+                local x = pile * (cardw+androidInterSpacing) - androidSpacing
+                local y = cardh-cardh+cardfontsize+5 + androidOverhead
+                local cardx = tempx - (#cardlitter%3+1)*cardw*0.75 - (100-androidSpacing)
+                local cardy = cardh-cardh+cardfontsize+5 + androidOverhead
+                if system=="Android" then cardx=cardx+screenw/10 end
+                local m = math.atan2(y-(cardy),x-(cardx+cardw/2))
+                local width=35*math.cos(m)
+                local height=35*math.sin(m)
+                local temp = {cards={card},cardx=cardx+cardw/2,cardy=cardy,x=x,y=y,width=width,height=height}
+                cardAnimate["pile"..pile] = temp
                 table.remove(cardlitter,#cardlitter)
                 break
             else
