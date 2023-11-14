@@ -102,6 +102,9 @@ cardStyle = {
         name="Default"
 }
 
+cardAnimate = {}
+cardAnimationCD = 0
+
 love.graphics.setBackgroundColor(0.2,0.05,0.2)
 
 love.math.setRandomSeed(os.time())
@@ -260,6 +263,21 @@ function love.update(dt)
             timePunish=timePunish-10
             deductPoints(2)
         end
+    end
+    cardAnimationCD=cardAnimationCD+dt
+    if cardAnimationCD>=0.001 then
+        for w,v in pairs(cardAnimate) do
+            local x = v.x
+            local y = v.y
+            local width=v.width*1.1
+            local height=v.height*1.1
+            v.cardx=v.cardx+width
+            v.cardy=v.cardy+height
+            if v.cardx+cardw/2 >= x and v.cardx <= x+cardw/2 and v.cardy+cardh/2 >= y and v.cardy <= y+cardh/2 then
+                cardAnimate[w]=nil
+            end
+        end
+        cardAnimationCD=cardAnimationCD-0.001
     end
 end
 
@@ -420,10 +438,14 @@ function love.draw()
         local x = k * (cardw+androidInterSpacing) - androidSpacing
         for i,card in ipairs(v) do
             local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
-            if card.visible then 
-                drawCard(card.number,card.suit,x,y)
+            if cardAnimate["list"..k..":"..i]==nil then
+                if card.visible then 
+                    drawCard(card.number,card.suit,x,y)
+                else
+                    drawBack(x,y)
+                end
             else
-                drawBack(x,y)
+                break
             end
         end
     end
@@ -433,11 +455,19 @@ function love.draw()
         local y = cardh-cardh+cardfontsize+5 + androidOverhead
         if cardpile[i] then
             local card = cardpile[i][#cardpile[i]]
-            if card then
-                drawCard(card.number,card.suit,x,y)
+            if cardAnimate["pile"..i]==nil then
+                if card then
+                    drawCard(card.number,card.suit,x,y)
+                end
+            else
+                local card = cardpile[i][#cardpile[i]-1]
+                if card then
+                    drawCard(card.number,card.suit,x,y)
+                end
             end
         end
     end
+
     local max=#cardlitter
     if max>3 then max=3 end    
     for i=1,max do
@@ -459,6 +489,14 @@ function love.draw()
             local x = mousex-cardonhand.cardx
             local y = mousey-cardonhand.cardy + ((i-1)*(cardh-cardh+cardfontsize+5))
             drawCard(v.number,v.suit,x,y)
+        end
+    end
+
+    for k,v in pairs(cardAnimate) do
+        for i,card in ipairs(v.cards) do
+            local y = v.cardy + ((i-1)*(cardh-cardh+cardfontsize+5))
+            print(card.number)
+            drawCard(card.number,card.suit,v.cardx,y)
         end
     end
 
@@ -946,6 +984,7 @@ end
 --Returns the cardonhand to where it used to be, 
 -- used when the cardonhand lands on a bad spot
 function returnCard()
+    local mx, my = love.mouse.getPosition()
     if clickSendCD<0.5 then
         local pile = checkPiles(cardonhand)
         local list = checkLists(cardonhand)
@@ -953,11 +992,17 @@ function returnCard()
             cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
             local behindHidden = makeVisible()
             putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
-            cardonhand=nil
             checkVictory()
             addPoints(15)
             playSound("move")
             clickSendCD=0
+            local x = pile * (cardw+androidInterSpacing) - androidSpacing
+            local y = cardh-cardh+cardfontsize+5 + androidOverhead
+            local m = math.atan2(y-(my-cardonhand.cardy),x-(mx-cardonhand.cardx))
+            local width=35*math.cos(m)
+            local height=35*math.sin(m)
+            local temp = {cards=cardonhand,cardx=mx-cardonhand.cardx,cardy=my-cardonhand.cardy,x=x,y=y,width=width,height=height}
+            cardAnimate["pile"..pile] = temp    
             return nil
         elseif list~=false then
             local index = #cardlists[list]
@@ -968,10 +1013,16 @@ function returnCard()
             end
             local behindHidden = makeVisible()
             putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex,behindHidden)
-            cardonhand=nil
             addPoints(2)
             playSound("move")
             clickSendCD=0
+            local x = tonumber(list) * (cardw+androidInterSpacing) - androidSpacing
+            local y = tonumber(newIndex) * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
+            local m = math.atan2(y-(my-cardonhand.cardy),x-(mx-cardonhand.cardx))
+            local width=35*math.cos(m)
+            local height=35*math.sin(m)
+            local temp = {cards=cardonhand,cardx=mx-cardonhand.cardx,cardy=my-cardonhand.cardy,x=x,y=y,width=width,height=height}
+            cardAnimate["list"..list..":"..newIndex] = temp            
             return nil
         end
     end
