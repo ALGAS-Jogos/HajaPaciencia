@@ -128,14 +128,20 @@ function drawStore()
     love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setLineWidth(oldThick)
     if storeState==1 then
-        for k,v in ipairs(storeItems) do
+        local y = screenh/2-height/2 + height/25
+        for k=1,#storeItems do            
             local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local spacing = ((width-cardw*storeMax))/storeMax
+            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
+            if k>storeMax*storeRows then break end
+            if k%(storeMax+1)==0 then 
+                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+            end
+            if k>storeMax then itr=k%storeMax end
+            if itr==0 then itr=storeMax end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            local v = storeItems[k+(storeMax*storeRows*(storePage-1))]
+            if v==nil then break end
             storeDrawCard("K","spades",x,y,v)
             love.graphics.setLineWidth(4)
             love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -151,14 +157,20 @@ function drawStore()
             end
         end
     elseif storeState==2 then
-        for k,v in ipairs(storeCB) do
+        local y = screenh/2-height/2 + height/25
+        for k=1,#storeCB do            
             local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local spacing = ((width-cardw*storeMax))/storeMax
+            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
+            if k>storeMax*storeRows then break end
+            if k%(storeMax+1)==0 then 
+                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+            end
+            if k>storeMax then itr=k%storeMax end
+            if itr==0 then itr=storeMax end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            local v = storeCB[k+(storeMax*storeRows*(storePage-1))]
+            if v==nil then break end
             storeDrawBack(x,y,v.img)
             love.graphics.setLineWidth(4)
             love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -174,14 +186,20 @@ function drawStore()
             end
         end
     elseif storeState==3 then
-        for k,v in ipairs(storeBacks) do
+        local y = screenh/2-height/2 + height/25
+        for k=1,#storeBacks do            
             local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local spacing = ((width-cardw*storeMax))/storeMax
+            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
+            if k>storeMax*storeRows then break end
+            if k%(storeMax+1)==0 then 
+                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+            end
+            if k>storeMax then itr=k%storeMax end
+            if itr==0 then itr=storeMax end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            local v = storeBacks[k+(storeMax*storeRows*(storePage-1))]
+            if v==nil then break end
             storeDrawBack(x,y,v.img)
             love.graphics.setLineWidth(4)
             love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -226,6 +244,33 @@ function drawStore()
         love.graphics.setColor(1,1,1,1)
         love.graphics.printf(storeButtons[i],cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
     end
+
+    --pages
+    local nw = cardfont:getWidth("<")+15
+    local nh = cardfontsize+10
+    local x = screenw/2-nw-5
+    local y = screenh/2-height/2+height-dockh
+    love.graphics.setLineWidth(6)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",x,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",x,y,nw,nh,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.printf("<",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    x = x+nw+5
+    nw = cardfont:getWidth(storePage.."/"..storePages)+15
+    love.graphics.printf(storePage.."/"..storePages,cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    x = x+nw+5
+    nw = cardfont:getWidth(">")+15
+    love.graphics.setLineWidth(6)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",x,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",x,y,nw,nh,5)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.printf(">",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+
+
     love.graphics.setLineWidth(oldThick)
 end
 

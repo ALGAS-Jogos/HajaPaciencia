@@ -65,6 +65,10 @@ storeBacks = {}
 
 storeButtons = {"Cartas","Versos","Fundos"}
 storeState = 1
+storePage = 1
+storePages = 1
+storeMax = 6
+storeRows = 2
 
 save = {
     coins=500,
@@ -357,6 +361,18 @@ function love.mousepressed(x, y, button, istouch)
                     inStore=false
                 elseif whatButton==1 or whatButton==2 or whatButton==3 then
                     storeState=whatButton
+                    storePage=1
+                    if storeState==1 then
+                        storePages=math.ceil(#storeItems/(storeMax*storeRows))
+                    elseif storeState==2 then
+                        storePages=math.ceil(#storeCB/(storeMax*storeRows))
+                    elseif storeState==3 then
+                        storePages=math.ceil(#storeBacks/(storeMax*storeRows))
+                    end
+                elseif whatButton=="nextPage" then
+                    storePage=math.min(storePage+1,storePages)
+                elseif whatButton=="prevPage" then
+                    storePage=math.max(storePage-1,1)
                 end
             else
                 local whatButton = storePromptCollision(x,y)
@@ -709,15 +725,33 @@ end
 function storeCollision(mx,my)
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3)
+
+    local dockh=height/8
+    for i=1,3 do
+        local nw = cardfont:getWidth(storeButtons[1])+15
+        local nh = cardfontsize+10
+        local x = screenw/2+width/2-nw-5
+        local y = screenh/2-height/2+height-dockh-(nh+5)*(i-1)
+        if mx >= x and mx <= x+nw and my >= y and my <= y+nh then 
+            return i
+        end
+    end
+
     if storeState==1 then
-        for k,v in ipairs(storeItems) do
+        local y = screenh/2-height/2 + height/25
+        for k=1,#storeItems do            
             local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local spacing = ((width-cardw*storeMax))/storeMax
+            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
+            if k>storeMax*storeRows then break end
+            if k%(storeMax+1)==0 then 
+                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+            end
+            if k>storeMax then itr=k%storeMax end
+            if itr==0 then itr=storeMax end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            local v = storeItems[k+(storeMax*storeRows*(storePage-1))]
+            if v==nil then break end
             if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
                 v["index"] = k
                 if v.bought then
@@ -730,14 +764,20 @@ function storeCollision(mx,my)
             end
         end
     elseif storeState==2 then
-        for k,v in ipairs(storeCB) do
+        local y = screenh/2-height/2 + height/25
+        for k=1,#storeCB do            
             local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local spacing = ((width-cardw*storeMax))/storeMax
+            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
+            if k>storeMax*storeRows then break end
+            if k%(storeMax+1)==0 then 
+                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+            end
+            if k>storeMax then itr=k%storeMax end
+            if itr==0 then itr=storeMax end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            local v = storeCB[k+(storeMax*storeRows*(storePage-1))]
+            if v==nil then break end
             if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
                 v["index"] = k
                 if v.bought then
@@ -751,14 +791,20 @@ function storeCollision(mx,my)
             end
         end
     elseif storeState==3 then
-        for k,v in ipairs(storeBacks) do
+        local y = screenh/2-height/2 + height/25
+        for k=1,#storeBacks do            
             local itr = k
-            local spacing = ((width-cardw*6))/6
-            local otherSpacing = ((screenw/2-width/2+(6)*(cardw+spacing))-width)/6
-            --if k>1 then otherSpacing=0 end
-            local y = screenh/2-height/2 + height/25
-            if k>6 then y=y+(cardh+cardfontsize+16)*math.floor(k/6);itr=k%6 end
+            local spacing = ((width-cardw*storeMax))/storeMax
+            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
+            if k>storeMax*storeRows then break end
+            if k%(storeMax+1)==0 then 
+                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+            end
+            if k>storeMax then itr=k%storeMax end
+            if itr==0 then itr=storeMax end
             local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+            local v = storeBacks[k+(storeMax*storeRows*(storePage-1))]
+            if v==nil then break end
             if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
                 v["index"] = k
                 if v.bought then
@@ -772,23 +818,29 @@ function storeCollision(mx,my)
             end
         end
     end
-    local x = screenw/2-width/2
-    local y = screenh/2-height/2
+
+    nw = cardfont:getWidth("<")+15
+    nh = cardfontsize+10
+    x = screenw/2-nw-5
+    y = screenh/2-height/2+height-dockh
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "prevPage"
+    end
+    x = x+nw+5
+    nw = cardfont:getWidth(storePage.."/"..storePages)+15
+    x = x+nw+5
+    nw = cardfont:getWidth(">")+15
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "nextPage"
+    end
+
+    x = screenw/2-width/2
+    y = screenh/2-height/2
     if mx >= x and mx <= x+width and my >= y and my <= y+height then 
     else
         return "outside"
     end
-    for i=1,3 do
-        local nw = cardfont:getWidth(storeButtons[1])+15
-        local nh = cardfontsize+10
-        local x = screenw/2+width/2-nw-5
-        local dockh=height/8
-        local y = screenh/2-height/2+height-dockh-(nh+5)*(i-1)
-        if mx >= x and mx <= x+nw and my >= y and my <= y+nh then 
-            return i
-        end
-    end
-    
+    return "nothing"
 end
 
 --Collision of the storePrompt
@@ -1224,6 +1276,14 @@ end
 
 --Inverts inStore
 function storeButton()
+    storePage=1
+    if storeState==1 then
+        storePages=math.ceil(#storeItems/(storeMax*storeRows))
+    elseif storeState==2 then
+        storePages=math.ceil(#storeCB/(storeMax*storeRows))
+    elseif storeState==3 then
+        storePages=math.ceil(#storeBacks/(storeMax*storeRows))
+    end
     inStore = not inStore
 end
 
