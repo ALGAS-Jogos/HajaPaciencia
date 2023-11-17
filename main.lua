@@ -166,6 +166,7 @@ function love.load()
         androidInterSpacing=5
         cardfontsize=math.floor(cardfontsize/1.5)
         cardfont=love.graphics.newFont(cardfontsize)
+        storeRows=3
         --love.window.maximize()
         --love.window.setFullscreen(true)
         local wait=true
@@ -799,23 +800,24 @@ end
 --Collision of the store
 function storeCollision(mx,my)
     local width = screenw-(screenw/8)
-    local height = screenh-(screenh/3)
-    local imgw, imgh = coinImg:getDimensions()
-    local scale = (height/8-10)/imgh
-    local dockw,dockh = cardfont:getWidth(tostring(save.coins))+(imgw*scale)+15,height/8
-    local dockx,docky = screenw/2-width/2+15, screenh/2-height/2+height-dockh-15
+    local height = screenh-(screenh/3.5)
+    local dockh = height/8
+
+    local nw = cardfont:getWidth(storeButtons[1])+15
+    local totalWidth = nw*3
+    local spacing = (screenw-totalWidth)/4
+    local y = screenh/2-height/2+5
+    local nh = cardfontsize+10
     for i=1,3 do
-        local nw = cardfont:getWidth(storeButtons[1])+15
-        local nh = cardfontsize+10
-        local x = screenw/2+width/2-nw-5
-        local y = screenh/2-height/2+height-dockh-(nh+5)*(i-1)
+        local x = (i-1)*(nw+spacing)+spacing
         if mx >= x and mx <= x+nw and my >= y and my <= y+nh then 
             return i
         end
     end
+    local ySpacing = cardfontsize+5
 
     if storeState==1 then
-        local y = screenh/2-height/2 + height/25
+        local y = screenh/2-height/2 + height/25+ySpacing
         for k=1,#storeItems do            
             local itr = k
             local spacing = ((width-cardw*storeMax))/storeMax
@@ -841,7 +843,7 @@ function storeCollision(mx,my)
             end
         end
     elseif storeState==2 then
-        local y = screenh/2-height/2 + height/25
+        local y = screenh/2-height/2 + height/25+ySpacing
         for k=1,#storeCB do            
             local itr = k
             local spacing = ((width-cardw*storeMax))/storeMax
@@ -868,7 +870,7 @@ function storeCollision(mx,my)
             end
         end
     elseif storeState==3 then
-        local y = screenh/2-height/2 + height/25
+        local y = screenh/2-height/2 + height/25+ySpacing
         for k=1,#storeBacks do            
             local itr = k
             local spacing = ((width-cardw*storeMax))/storeMax
@@ -896,19 +898,19 @@ function storeCollision(mx,my)
         end
     end
 
-    nw = cardfont:getWidth("<")+15
-    nh = cardfontsize+10
-    x = dockx+dockw+5
-    y = screenh/2-height/2+height-dockh
-    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
-        return "prevPage"
-    end
-    x = x+nw+5
-    nw = cardfont:getWidth(storePage.."/"..storePages)+15
-    x = x+nw+5
-    nw = cardfont:getWidth(">")+15
+    local nw = cardfont:getWidth(">")+15
+    local nh = cardfontsize+10
+    local x = screenw/2+width/2-nw-15
+    local y = screenh/2-height/2+height-dockh
     if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
         return "nextPage"
+    end
+    nw = cardfont:getWidth(storePage.."/"..storePages)+15
+    x = x-nw-5
+    nw = cardfont:getWidth("<")+15
+    x = x-nw-5
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "prevPage"
     end
 
     x = screenw/2-width/2

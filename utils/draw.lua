@@ -125,15 +125,16 @@ function drawStore()
     love.graphics.rectangle('fill',0,0,screenw,screenh)
     --draw the base rectangle and its border
     local width = screenw-(screenw/8)
-    local height = screenh-(screenh/3)
+    local height = screenh-(screenh/3.5)
     love.graphics.setLineWidth(7)
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
     love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
     love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
     love.graphics.setLineWidth(oldThick)
+    local ySpacing = cardfontsize+5
     if storeState==1 then
-        local y = screenh/2-height/2 + height/25
+        local y = screenh/2-height/2 + height/25+ySpacing
         for k=1,#storeItems do            
             local itr = k
             local spacing = ((width-cardw*storeMax))/storeMax
@@ -162,7 +163,7 @@ function drawStore()
             end
         end
     elseif storeState==2 then
-        local y = screenh/2-height/2 + height/25
+        local y = screenh/2-height/2 + height/25+ySpacing
         for k=1,#storeCB do            
             local itr = k
             local spacing = ((width-cardw*storeMax))/storeMax
@@ -191,7 +192,7 @@ function drawStore()
             end
         end
     elseif storeState==3 then
-        local y = screenh/2-height/2 + height/25
+        local y = screenh/2-height/2 + height/25+ySpacing
         for k=1,#storeBacks do            
             local itr = k
             local spacing = ((width-cardw*storeMax))/storeMax
@@ -234,11 +235,13 @@ function drawStore()
     love.graphics.print(tostring(save.coins),cardfont,dockx+(coinImg:getWidth()*scale)+5,docky+(math.abs(cardfontsize-dockh))/2)
 
     --Buttons
+    local nw = cardfont:getWidth(storeButtons[1])+15
+    local totalWidth = nw*3
+    local spacing = (screenw-totalWidth)/4
+    local y = screenh/2-height/2+5
+    local nh = cardfontsize+10
     for i=1,3 do
-        local nw = cardfont:getWidth(storeButtons[1])+15
-        local nh = cardfontsize+10
-        local x = screenw/2+width/2-nw-5
-        local y = screenh/2-height/2+height-dockh-(nh+5)*(i-1)
+        local x = (i-1)*(nw+spacing)+spacing
         if i==storeState then
             love.graphics.setLineWidth(6)
             love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -251,9 +254,9 @@ function drawStore()
     end
 
     --pages
-    local nw = cardfont:getWidth("<")+15
+    local nw = cardfont:getWidth(">")+15
     local nh = cardfontsize+10
-    local x = dockx+dockw+15
+    local x = screenw/2+width/2-nw-15
     local y = screenh/2-height/2+height-dockh
     love.graphics.setLineWidth(6)
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -261,19 +264,19 @@ function drawStore()
     love.graphics.setColor(0, 0.239, 0.063)
     love.graphics.rectangle("fill",x,y,nw,nh,5)
     love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("<",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
-    x = x+nw+5
+    love.graphics.printf(">",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
     nw = cardfont:getWidth(storePage.."/"..storePages)+15
+    x = x-nw-5
     love.graphics.printf(storePage.."/"..storePages,cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
-    x = x+nw+5
-    nw = cardfont:getWidth(">")+15
+    nw = cardfont:getWidth("<")+15
+    x = x-nw-5
     love.graphics.setLineWidth(6)
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
     love.graphics.rectangle("line",x,y,nw,nh,5)
     love.graphics.setColor(0, 0.239, 0.063)
     love.graphics.rectangle("fill",x,y,nw,nh,5)
     love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(">",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    love.graphics.printf("<",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
 
 
     love.graphics.setLineWidth(oldThick)
