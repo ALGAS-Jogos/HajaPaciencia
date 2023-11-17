@@ -30,6 +30,7 @@ androidOverhead = 0
 androidSmall = 0.1
 
 coinImg = love.graphics.newImage("img/coin.png")
+settingsImg = love.graphics.newImage("img/settings.png")
 
 buttons = {
     {img=love.graphics.newImage("img/undo.png")},
@@ -51,6 +52,7 @@ inStore = false
 inStorePrompt = nil
 inStats = false
 inVictory = false
+inSettings = false
 
 wonGame = false
 allVisible = false
@@ -84,6 +86,21 @@ save = {
     moves=0,
     backImg="backgrounds/back1.jpg",
     backCard="cards/back1.png"
+}
+
+settings = {
+    hardSetting = {value=50,name="Dificuldade"},
+    backColor = {value="Sem cor",name="Cor do fundo"},
+    animationSpeed = {value=35,name="Vel. Animação"}
+}
+table.sort(settings)
+
+possibleBackColors = {
+    ["Sem cor"] = {1,1,1},
+    ["Vermelho"] = {1,0.6,0.6},
+    ["Verde"] = {0.6,1,0.6},
+    ["Azul"] = {0.6,0.6,1},
+    keys = {"Sem cor","Vermelho","Verde","Azul"}
 }
 
 currentSecs = 0
@@ -255,7 +272,7 @@ function love.update(dt)
         end
     end
 
-    if inVictory==false and inStats==false and inStore==false and wonGame==false then
+    if inVictory==false and inStats==false and inStore==false and wonGame==false and inSettings==false then
         currentCD=currentCD+dt
         timePunish=timePunish+dt
         if currentCD>=1 then
@@ -287,7 +304,7 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if button == 1 then 
-        if inStats==false and inStore==false and inVictory==false then
+        if inStats==false and inStore==false and inVictory==false and inSettings==false then
             if cardonhand==nil then
                 if wonGame==false then
                     clickSendCD=0
@@ -411,6 +428,57 @@ function love.mousepressed(x, y, button, istouch)
             elseif whatButton=="outside" then
                 inVictory=false
             end
+        elseif inSettings then
+            local whatButton = settingsCollision(x,y)
+            if whatButton=="outside" then
+                inSettings=false
+            elseif whatButton=="ok" then
+                
+            end
+            print(whatButton.name)
+            if whatButton.action == "plus" then
+                if whatButton.name=="Cor do fundo" then
+                    local found = false
+                    for i,v in ipairs(possibleBackColors.keys) do
+                        local k=v
+                        if found then
+                            local nextKey = k
+                            settings.backColor.value=nextKey
+                            break
+                        end
+                        if k == settings.backColor.value then
+                            found = true
+                        end
+                        if i==#possibleBackColors.keys then
+                            settings.backColor.value=possibleBackColors.keys[1]
+                            break
+                        end
+                    end
+                elseif whatButton.name=="Dificuldade" then
+                    settings.hardSetting.value=math.min(settings.hardSetting.value+5,75)
+                elseif whatButton.name=="Vel. Animação" then
+                    settings.animationSpeed.value=math.min(settings.animationSpeed.value+5,75)
+                end
+            elseif whatButton.action=="minus" then
+                if whatButton.name=="Cor do fundo" then
+                    for i,v in ipairs(possibleBackColors.keys) do
+                        local k=v
+                        if k == settings.backColor.value then
+                            if i==1 then
+                                settings.backColor.value=possibleBackColors.keys[#possibleBackColors.keys]
+                                break
+                            end
+                            local nextKey = possibleBackColors.keys[i-1]
+                            settings.backColor.value=nextKey
+                            break
+                        end
+                    end
+                elseif whatButton.name=="Dificuldade" then
+                    settings.hardSetting.value=math.max(settings.hardSetting.value-5,15)
+                elseif whatButton.name=="Vel. Animação" then
+                    settings.animationSpeed.value=math.max(settings.animationSpeed.value-5,15)
+                end
+            end
         end
     end
     if allVisible then
@@ -429,6 +497,7 @@ function love.draw()
     local scaleBackX, scaleBackY = backgroundImg:getDimensions()
     scaleBackX = screenw/scaleBackX
     scaleBackY = screenh/scaleBackY
+    love.graphics.setColor(possibleBackColors[settings.backColor.value])
     love.graphics.draw(backgroundImg,0,0,0,scaleBackX,scaleBackY)
 
 
@@ -534,7 +603,8 @@ function love.draw()
     if inStorePrompt then drawStorePrompt() end
     if inStats then drawStats() end
     if inVictory then drawVictory() end
-    if allVisible then drawAllVisible() end
+    if allVisible and winning==false then drawAllVisible() end
+    if inSettings then drawSettings() end
 end
 
 --Adds a card at the bottom of a list
@@ -712,12 +782,17 @@ function checkForButtons(mx,my)
     
     
         -- Calcula a posição y dos botões colados na parte inferior da tela
-        local y = screenh - buttonHeight - 20
+        local y = screenh - buttonHeight - 10
         for i, btn in ipairs(buttons) do
             local x = xStart + (i - 1) * (buttonWidth + totalPadding)
             if mx >= x and mx <= x+buttonWidth and my >= y and my <= y+buttonHeight then            
                 return i
             end
+        end
+        local x = 15
+        y = y - buttonHeight-10
+        if mx >= x and mx <= x+buttonWidth and my >= y and my <= y+buttonHeight then            
+            return 6
         end
 end
 
@@ -725,8 +800,10 @@ end
 function storeCollision(mx,my)
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3)
-
-    local dockh=height/8
+    local imgw, imgh = coinImg:getDimensions()
+    local scale = (height/8-10)/imgh
+    local dockw,dockh = cardfont:getWidth(tostring(save.coins))+(imgw*scale)+15,height/8
+    local dockx,docky = screenw/2-width/2+15, screenh/2-height/2+height-dockh-15
     for i=1,3 do
         local nw = cardfont:getWidth(storeButtons[1])+15
         local nh = cardfontsize+10
@@ -753,7 +830,7 @@ function storeCollision(mx,my)
             local v = storeItems[k+(storeMax*storeRows*(storePage-1))]
             if v==nil then break end
             if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
-                v["index"] = k
+                v["index"] = k+((storeMax*storeRows)*(storePage-1))
                 if v.bought then
                     cardStyle=v
                     inStore=false
@@ -779,7 +856,7 @@ function storeCollision(mx,my)
             local v = storeCB[k+(storeMax*storeRows*(storePage-1))]
             if v==nil then break end
             if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
-                v["index"] = k
+                v["index"] = k+((storeMax*storeRows)*(storePage-1))
                 if v.bought then
                     cardBack=v.img
                     save.backCard=v.imgName
@@ -806,7 +883,7 @@ function storeCollision(mx,my)
             local v = storeBacks[k+(storeMax*storeRows*(storePage-1))]
             if v==nil then break end
             if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then 
-                v["index"] = k
+                v["index"] = k+((storeMax*storeRows)*(storePage-1))
                 if v.bought then
                     changeBack(v.img)
                     save.backImg=v.imgName
@@ -821,7 +898,7 @@ function storeCollision(mx,my)
 
     nw = cardfont:getWidth("<")+15
     nh = cardfontsize+10
-    x = screenw/2-nw-5
+    x = dockx+dockw+5
     y = screenh/2-height/2+height-dockh
     if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
         return "prevPage"
@@ -906,6 +983,42 @@ function statsCollision(mx,my)
     else
         return "outside"
     end
+end
+
+function settingsCollision(mx,my)
+    --grey the background out
+    love.graphics.setColor(0,0,0,0.3)
+    love.graphics.rectangle('fill',0,0,screenw,screenh)
+    --draw the base rectangle and its border
+    local cellFactor = 2.8
+    if system=="Android" then cellFactor=2.4 end
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/cellFactor)
+    local x = screenw/2-width/2
+    local y = screenh/2-height/2+15
+    local ySpacing = cardfont:getHeight()-10
+    y=y+cardfontsize+ySpacing
+    for k,v in pairs(settings) do
+        y=y+ySpacing+ySpacing+10
+        local nw = cardfont:getWidth("+")+30
+        local nh = cardfont:getHeight()+5
+        local nx = x+width-nw-15
+        --o mais
+        if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
+            return {name=v.name,action="plus"}
+        end
+        nx=x+10
+        if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
+            return {name=v.name,action="minus"}
+        end
+        y=y+cardfontsize+ySpacing+5
+    end
+    y = screenh/2-height/2
+    if mx >= x and mx <= x+width and my >= y and my <= y+height then 
+    else
+        return "outside"
+    end
+    return "ok"
 end
 
 function allVisibleCollision(mx,my)
@@ -1032,6 +1145,8 @@ function pressButton(btn)
         storeButton()
     elseif btn==5 then --REDO
         getRedo()
+    elseif btn==6 then
+        settingsButton()
     end
 end
 
@@ -1039,6 +1154,7 @@ end
 -- used when the cardonhand lands on a bad spot
 function returnCard()
     local mx, my = love.mouse.getPosition()
+    local speed = settings.animationSpeed.value
     if clickSendCD<0.5 then
         local pile = checkPiles(cardonhand)
         local list = checkLists(cardonhand)
@@ -1053,8 +1169,8 @@ function returnCard()
             local x = pile * (cardw+androidInterSpacing) - androidSpacing
             local y = cardh-cardh+cardfontsize+5 + androidOverhead
             local m = math.atan2(y-(my-cardonhand.cardy),x-(mx-cardonhand.cardx))
-            local width=35*math.cos(m)
-            local height=35*math.sin(m)
+            local width=speed*math.cos(m)
+            local height=speed*math.sin(m)
             local temp = {cards=cardonhand,cardx=mx-cardonhand.cardx,cardy=my-cardonhand.cardy,x=x,y=y,width=width,height=height}
             cardAnimate["pile"..pile] = temp    
             return nil
@@ -1073,8 +1189,8 @@ function returnCard()
             local x = tonumber(list) * (cardw+androidInterSpacing) - androidSpacing
             local y = tonumber(newIndex) * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
             local m = math.atan2(y-(my-cardonhand.cardy),x-(mx-cardonhand.cardx))
-            local width=35*math.cos(m)
-            local height=35*math.sin(m)
+            local width=speed*math.cos(m)
+            local height=speed*math.sin(m)
             local temp = {cards=cardonhand,cardx=mx-cardonhand.cardx,cardy=my-cardonhand.cardy,x=x,y=y,width=width,height=height}
             cardAnimate["list"..list..":"..newIndex] = temp            
             return nil
@@ -1287,6 +1403,10 @@ function storeButton()
     inStore = not inStore
 end
 
+function settingsButton()
+    inSettings = not inSettings
+end
+
 --Inverts inStats
 function statsButton()
     inStats = not inStats
@@ -1379,7 +1499,7 @@ function addCards()
     --if unusedAddCards()==false then return true end
     local cards = allCards()
     local limit = 28
-    local hardSetting = 50
+    local hardSetting = settings.hardSetting.value
     for i=1,#cards do
         local toWhere = random(1,100)
         local card = cards[i]

@@ -55,6 +55,11 @@ function drawButtons()
         local x = xStart + (i - 1) * (buttonWidth + totalPadding)
         love.graphics.draw(btn.img, x, y + 10, 0, androidFactor)
     end
+
+    --settings button
+    local x = 15
+    y = y - buttonHeight-20
+    love.graphics.draw(settingsImg,x,y+10,0,androidFactor)
 end
 
 function drawCard(number,suit,x,y)
@@ -248,7 +253,7 @@ function drawStore()
     --pages
     local nw = cardfont:getWidth("<")+15
     local nh = cardfontsize+10
-    local x = screenw/2-nw-5
+    local x = dockx+dockw+15
     local y = screenh/2-height/2+height-dockh
     love.graphics.setLineWidth(6)
     love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
@@ -578,4 +583,87 @@ function storeDrawBack(x,y,img)
     love.graphics.draw(img,x,y,0,scaleX,scaleY)
     love.graphics.setStencilTest()
     love.graphics.setColor(1,1,1)
+end
+
+function drawSettings()
+    --grey the background out
+    love.graphics.setColor(0,0,0,0.3)
+    love.graphics.rectangle('fill',0,0,screenw,screenh)
+    --draw the base rectangle and its border
+    local cellFactor = 2.8
+    if system=="Android" then cellFactor=2.4 end
+    local width = screenw-(screenw/4)
+    local height = screenh-(screenh/cellFactor)
+    love.graphics.setLineWidth(7)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
+    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+
+    local x = screenw/2-width/2
+    local y = screenh/2-height/2+15
+    local ySpacing = cardfont:getHeight()-10
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Configurações",cardfont,x,y,width,"center")
+    y=y+cardfontsize+ySpacing
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    for k,v in pairs(settings) do
+        y=y+ySpacing
+        love.graphics.setColor(1,1,1)
+        love.graphics.printf(v.name,cardfont,x,y,width,"center")
+        y=y+ySpacing+10
+        local nw = cardfont:getWidth("+")+30
+        local nh = cardfont:getHeight()+5
+        local nx = x+width-nw-15
+        love.graphics.setLineWidth(5)
+        love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+        love.graphics.rectangle("line",nx,y,nw,nh,5)
+        love.graphics.setColor(0, 0.239, 0.063)
+        love.graphics.rectangle("fill",nx,y,nw,nh,5)
+        love.graphics.setColor(1,1,1)
+        love.graphics.printf("+",cardfont,nx,y+2.5,nw,"center")
+        nx=x+10
+        love.graphics.setLineWidth(5)
+        love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+        love.graphics.rectangle("line",nx,y,nw,nh,5)
+        love.graphics.setColor(0, 0.239, 0.063)
+        love.graphics.rectangle("fill",nx,y,nw,nh,5)
+        love.graphics.setColor(1,1,1)
+        love.graphics.printf("-",cardfont,nx,y+2.5,nw,"center")
+        love.graphics.setColor(1,1,1)
+        love.graphics.printf(v.value,cardfont,x,y,width,"center")
+        y=y+cardfontsize+ySpacing+5
+        love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+        love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    end
+
+    local nw = cardfont:getWidth("Apagar dados")+30
+    local nh = cardfont:getHeight()+5
+    local nx = x+15
+    y=screenh/2+height/2-nh-15-nh-15
+    love.graphics.setLineWidth(5)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",nx,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",nx,y,nw,nh,5)
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Apagar dados",cardfont,nx,y+2.5,nw,"center")
+
+    local nw = cardfont:getWidth("Voltar")+30
+    local nh = cardfont:getHeight()+5
+    local nx = x+15
+    y=screenh/2+height/2-nh-15
+    love.graphics.setLineWidth(5)
+    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
+    love.graphics.rectangle("line",nx,y,nw,nh,5)
+    love.graphics.setColor(0, 0.239, 0.063)
+    love.graphics.rectangle("fill",nx,y,nw,nh,5)
+    love.graphics.setColor(1,1,1)
+    love.graphics.printf("Voltar",cardfont,nx,y+2.5,nw,"center")
+    --reset button
+
+
+    love.graphics.setColor(1,1,1)
+    love.graphics.setLineWidth(oldThick)
 end
