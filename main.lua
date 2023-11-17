@@ -70,7 +70,7 @@ storeState = 1
 storePage = 1
 storePages = 1
 storeMax = 6
-storeRows = 2
+storeRows = 3
 
 save = {
     coins=500,
