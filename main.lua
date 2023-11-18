@@ -441,8 +441,9 @@ function love.mousepressed(x, y, button, istouch)
             playSound("menu")
             if whatButton=="outside" then
                 inSettings=false
-            elseif whatButton=="ok" then
-                
+            elseif whatButton=="eraseSave" then
+                eraseSave()
+                inSettings=false
             end
             if whatButton.action == "plus" then
                 if whatButton.name=="Cor do fundo" then
@@ -465,7 +466,7 @@ function love.mousepressed(x, y, button, istouch)
                 elseif whatButton.name=="Dificuldade" then
                     settings.hardSetting.value=math.min(settings.hardSetting.value+5,75)
                 elseif whatButton.name=="Vel. Animação" then
-                    settings.animationSpeed.value=math.min(settings.animationSpeed.value+5,75)
+                    settings.animationSpeed.value=math.min(settings.animationSpeed.value+5,50)
                 end
             elseif whatButton.action=="minus" then
                 if whatButton.name=="Cor do fundo" then
@@ -484,7 +485,7 @@ function love.mousepressed(x, y, button, istouch)
                 elseif whatButton.name=="Dificuldade" then
                     settings.hardSetting.value=math.max(settings.hardSetting.value-5,15)
                 elseif whatButton.name=="Vel. Animação" then
-                    settings.animationSpeed.value=math.max(settings.animationSpeed.value-5,15)
+                    settings.animationSpeed.value=math.max(settings.animationSpeed.value-5,25)
                 end
             end
         end
@@ -1584,7 +1585,10 @@ function saveGame()
     local success3, message = love.filesystem.write("storeBacks",svFile)
     svFile = json.encode(cardStyle)
     local success4, message = love.filesystem.write("cardStyle",svFile)
-    return success and success1 and success2 and success3 and success4
+    svFile = json.encode(settings)
+    local success5, message = love.filesystem.write("config",svFile)
+    
+    return success and success1 and success2 and success3 and success4 and success5
 end
 
 function readSave()
@@ -1599,6 +1603,8 @@ function readSave()
         storeBacks = json.decode(tmp)
         tmp = love.filesystem.read("cardStyle")
         cardStyle = json.decode(tmp)
+        tmp = love.filesystem.read("config")
+        settings = json.decode(tmp)
         return json.decode(temp)
     else
         return nil
@@ -1606,7 +1612,51 @@ function readSave()
 end
 
 function eraseSave()
+    love.filesystem.remove("save")
+    love.filesystem.remove("storeItems")
+    love.filesystem.remove("storeBacks")
+    love.filesystem.remove("storeCB")
+    love.filesystem.remove("config")
+    cardStyle = {
+        color={1,1,1},
+            textcolor={0,0,0},
+            suitcolor={0,0,0},
+            casered={0.6,0,0},
+            backImg=nil,
+            fontName="fonts/Bricolage.ttf",
+            font="fonts/Bricolage.ttf",
+            bought=true,
+            price=0,
+            name="Default"
+    }
+    save = {
+        coins=500,
+        highScore=0,
+        highTime="0:00",
+        lowTime="0:00",
+        totalTime="0:00",
+        totalGames=0,
+        totalWins=0,
+        totalLoss=0,
+        points=0,
+        currentTime="0:00",
+        moves=0,
+        backImg="backgrounds/back1.jpg",
+        backCard="cards/back1.png"
+    }
     
+    settings = {
+        hardSetting = {value=50,name="Dificuldade"},
+        backColor = {value="Sem cor",name="Cor do fundo"},
+        animationSpeed = {value=35,name="Vel. Animação"}
+    }
+    storeItems=loadStoreItems()
+    storeCB=loadStoreCB()
+    storeBacks=loadStoreBacks()
+    backgroundImg = love.graphics.newImage(save.backImg)
+    cardBack = love.graphics.newImage(save.backCard)
+    resetAllFonts()
+    resetImages()
 end
 
 function statsUpdate()
