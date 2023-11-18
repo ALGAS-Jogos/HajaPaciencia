@@ -70,7 +70,7 @@ storeState = 1
 storePage = 1
 storePages = 1
 storeMax = 6
-storeRows = 3
+storeRows = 2
 
 save = {
     coins=500,
@@ -134,7 +134,9 @@ random = love.math.random
 sounds = {
     move = love.audio.newSource("sfx/newmove.mp3","static"),
     new = love.audio.newSource("sfx/new.mp3","static"),
-    victory = love.audio.newSource("sfx/victory.mp3","static")
+    victory = love.audio.newSource("sfx/victory.mp3","static"),
+    menu = love.audio.newSource("sfx/menu.mp3","static"),
+    error = love.audio.newSource("sfx/error.mp3","static")
 }
 
 function love.load()
@@ -370,11 +372,13 @@ function love.mousepressed(x, y, button, istouch)
                 local button = checkForButtons(x,y)
                 if button then
                     pressButton(button)
+                    playSound("menu")
                 end
             end
         elseif inStore then
             if inStorePrompt==nil then
                 local whatButton = storeCollision(x,y)
+                playSound("menu")
                 if whatButton=="outside" then
                     inStore=false
                 elseif whatButton==1 or whatButton==2 or whatButton==3 then
@@ -394,6 +398,7 @@ function love.mousepressed(x, y, button, istouch)
                 end
             else
                 local whatButton = storePromptCollision(x,y)
+                playSound("menu")
                 if whatButton=="buy" then
                     if save.coins>=inStorePrompt.price then
                         if storeState==1 then
@@ -418,11 +423,13 @@ function love.mousepressed(x, y, button, istouch)
             end
         elseif inStats then
             local whatButton = statsCollision(x,y)
+            playSound("menu")
             if whatButton=="outside" then
                 inStats=false
             end
         elseif inVictory then
             local whatButton = victoryCollision(x,y)
+            playSound("menu")
             if whatButton=="new" then
                 pressButton(3)
                 inVictory=false
@@ -431,12 +438,12 @@ function love.mousepressed(x, y, button, istouch)
             end
         elseif inSettings then
             local whatButton = settingsCollision(x,y)
+            playSound("menu")
             if whatButton=="outside" then
                 inSettings=false
             elseif whatButton=="ok" then
                 
             end
-            print(whatButton.name)
             if whatButton.action == "plus" then
                 if whatButton.name=="Cor do fundo" then
                     local found = false
@@ -733,7 +740,7 @@ end
 
 --Collision on the stack
 function checkStack(mx,my)
-    local x = 7*(cardw+10)-100
+    local x =  7 * (cardw+androidInterSpacing) - androidSpacing
     local y = cardh-cardh+cardfontsize+5 + androidOverhead
     if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then            
         return true
@@ -1015,6 +1022,20 @@ function settingsCollision(mx,my)
         end
         y=y+cardfontsize+ySpacing+5
     end
+    local nw = cardfont:getWidth("Apagar dados")+30
+    local nh = cardfont:getHeight()+5
+    local nx = x+15
+    y=screenh/2+height/2-nh-15-nh-15
+    if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
+        return "eraseSave"
+    end
+    nw = cardfont:getWidth("Voltar")+30
+    nh = cardfont:getHeight()+5
+    nx = x+15
+    y=screenh/2+height/2-nh-15
+    if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
+        return "outside"
+    end
     y = screenh/2-height/2
     if mx >= x and mx <= x+width and my >= y and my <= y+height then 
     else
@@ -1215,6 +1236,7 @@ function returnCard()
             cardlists[cardonhand.lastlist][index+i] = v
         end
     end
+    playSound("error")
     clickSendCD=0
     return nil
 end
@@ -1333,6 +1355,8 @@ function getRedo()
         lastMovesIndex = #lastMoves+1
         table.remove(forwardMoves,#forwardMoves)
         save.moves=save.moves+1
+    else
+        playSound("error")
     end
 end
 
@@ -1579,6 +1603,10 @@ function readSave()
     else
         return nil
     end
+end
+
+function eraseSave()
+    
 end
 
 function statsUpdate()
