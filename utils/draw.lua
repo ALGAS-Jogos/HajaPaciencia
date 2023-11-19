@@ -59,7 +59,13 @@ function drawButtons()
     --settings button
     local x = 15
     y = y - buttonHeight-20
+    local nw,nh = settingsImg:getDimensions()
+    nw,nh=nw*androidFactor,nh*androidFactor
+    love.graphics.setColor(0,0,0,0.35)
+    love.graphics.rectangle("fill",-100,y+5,nw+100+10+15,nh+10,nw/2)
+    love.graphics.setColor(1,1,1,1)
     love.graphics.draw(settingsImg,x,y+10,0,androidFactor)
+    love.graphics.setColor(1,1,1,1)
 end
 
 function drawCard(number,suit,x,y)
