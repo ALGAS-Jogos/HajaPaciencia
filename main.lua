@@ -206,6 +206,13 @@ function love.update(dt)
                     end
                     local behindHidden = makeVisible()
                     putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex,behindHidden)
+                    if string.match(cardonhand.lastlist,"pile") then
+                        local pile = tonumber(string.sub(cardonhand.lastlist,5)) or 1
+                        local actualPile = cardpile[pile]
+                        if actualPile then
+                            if not (#actualPile>0) then table.remove(cardpile,pile) end
+                        end
+                    end
                     cardonhand=nil
                     addPoints(2)
                     playSound("move")
@@ -591,7 +598,6 @@ function love.draw()
     for k,v in pairs(cardAnimate) do
         for i,card in ipairs(v.cards) do
             local y = v.cardy + ((i-1)*(cardh-cardh+cardfontsize+5))
-            print(card.number)
             drawCard(card.number,card.suit,v.cardx,y)
         end
     end
@@ -1216,7 +1222,14 @@ function returnCard()
             local width=speed*math.cos(m)
             local height=speed*math.sin(m)
             local temp = {cards=cardonhand,cardx=mx-cardonhand.cardx,cardy=my-cardonhand.cardy,x=x,y=y,width=width,height=height}
-            cardAnimate["list"..list..":"..newIndex] = temp            
+            cardAnimate["list"..list..":"..newIndex] = temp
+            if string.match(cardonhand.lastlist,"pile") then
+                local pile = tonumber(string.sub(cardonhand.lastlist,5)) or 1
+                local actualPile = cardpile[pile]
+                if actualPile then
+                    if not (#actualPile>0) then table.remove(cardpile,pile) end
+                end
+            end
             return nil
         end
     end
@@ -1252,7 +1265,6 @@ function checkPiles(ch)
     end
     for k,v in ipairs(cardpile) do
         local card = v[#v]
-        print(card.number)
         if checkIfPost(card.number,coh.number) and coh.suit==card.suit then
             return k
         end
@@ -1471,6 +1483,7 @@ end
 function checkVictory()
     local comply = 0
     for k,v in ipairs(cardpile) do
+        if v[#v]==nil then return false end
         if v[#v].number == "K" then comply=comply+1 end
     end
     if comply==4 then
