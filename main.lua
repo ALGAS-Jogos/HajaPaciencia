@@ -633,6 +633,18 @@ function addCardToList(listnumber,number,suit,visible)
     cardlists[listnumber][index+1] = {number=number,suit=suit,visible=visible}
 end
 
+function addCardToListGen(listnumber,number,suit,visible)
+    if cardlists[listnumber] then
+    else
+        cardlists[listnumber] = {}
+    end
+    local obj={{number=number,suit=suit,visible=visible}}
+    for k,v in ipairs(cardlists[listnumber]) do
+        obj[#obj+1] = v
+    end
+    cardlists[listnumber]=obj
+end
+
 --Collision for the lists
 --No cardonhand
 function checkCollision(mx,my)
@@ -1557,7 +1569,7 @@ function addCards()
                 end
             end
             local isVisible=false
-            addCardToList(column,card.number,card.suit,isVisible)
+            addCardToListGen(column,card.number,card.suit,isVisible)
             limit=limit-1
         else
             cardstacks[#cardstacks+1] = card
