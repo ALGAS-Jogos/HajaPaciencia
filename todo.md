@@ -32,4 +32,4 @@
         - ~~Pontos extras trocando Ás de lugar nas pilhas~~
     - Ajustar a fórmula de pontos
 - Tempo
-    - Fazer o tempo não contar quando o app está fora de foco
+    - ~~Fazer o tempo não contar quando o app está fora de foco~~
