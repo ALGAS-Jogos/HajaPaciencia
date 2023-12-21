@@ -285,7 +285,7 @@ function love.update(dt)
         end
     end
 
-    if inVictory==false and inStats==false and inStore==false and wonGame==false and inSettings==false then
+    if inVictory==false and inStats==false and inStore==false and wonGame==false and inSettings==false and love.window.hasMouseFocus() then
         currentCD=currentCD+dt
         timePunish=timePunish+dt
         if currentCD>=1 then
@@ -1861,7 +1861,6 @@ function checkNullPiles()
                         table.remove(cardpile[i],k)
                     end
                 end
-
             end
         end
     end
