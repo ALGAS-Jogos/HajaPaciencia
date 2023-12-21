@@ -189,11 +189,10 @@ end
 
 function love.update(dt)
     local mousex,mousey = love.mouse.getPosition()
-    --print(checkPile(mousex,mousey))
+    if cardonhand~=nil then clickSendCD = clickSendCD+dt end
     if love.mouse.isDown(1)==false then
         if cardonhand==nil then
         else
-            clickSendCD = clickSendCD+dt
             local pile = checkPile(mousex,mousey)
             local baselist = checkForList(mousex,mousey)
             local card,list,index = checkCollisionTwo(mousex,mousey)
@@ -229,7 +228,7 @@ function love.update(dt)
                             local behindHidden = makeVisible()
                             putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
                             checkVictory()
-                            if string.sub(cardonhand.lastlist,1,4)~="pile" then addPoints(15) end
+                            if not string.match(cardonhand.lastlist,"pile") then addPoints(15) end
                             playSound("move")
                             cardonhand=nil
                         else
@@ -244,7 +243,7 @@ function love.update(dt)
                         cardpile[pile][#cardpile[pile]+1] = cardonhand[1]
                         local behindHidden = makeVisible()
                         putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
-                        if string.sub(cardonhand.lastlist,1,4)~="pile" then addPoints(15) end
+                        if not string.match(cardonhand.lastlist,"pile") then addPoints(15) end
                         cardonhand=nil
                         playSound("move")
                     else
@@ -1205,7 +1204,7 @@ function returnCard()
             local behindHidden = makeVisible()
             putLastMove(cardonhand.lastlist,"pile"..pile,#cardonhand,0,behindHidden)
             checkVictory()
-            addPoints(15)
+            if not string.match(cardonhand.lastlist,"pile") then addPoints(15) end
             playSound("move")
             clickSendCD=0
             local x = pile * (cardw+androidInterSpacing) - androidSpacing
