@@ -285,7 +285,7 @@ function love.update(dt)
         end
     end
 
-    if inVictory==false and inStats==false and inStore==false and wonGame==false and inSettings==false and love.window.hasMouseFocus() then
+    if inVictory==false and inStats==false and inStore==false and wonGame==false and inSettings==false and (love.window.hasMouseFocus() or love.window.hasFocus()) then
         currentCD=currentCD+dt
         timePunish=timePunish+dt
         if currentCD>=1 then
