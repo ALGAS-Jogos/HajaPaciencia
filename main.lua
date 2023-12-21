@@ -251,7 +251,7 @@ function love.update(dt)
                         cardonhand = returnCard()
                     end
                 end
-            elseif baselist then
+            elseif baselist and cardonhand.lastlist~=baselist then
                 if cardonhand[1].number=="K" then
                     if #cardlists[baselist]==0 then
                         for i,v in ipairs(cardonhand) do                        
@@ -1216,7 +1216,7 @@ function returnCard()
             local temp = {cards=cardonhand,cardx=mx-cardonhand.cardx,cardy=my-cardonhand.cardy,x=x,y=y,width=width,height=height}
             cardAnimate["pile"..pile] = temp    
             return nil
-        elseif list~=false then
+        elseif list~=false and cardonhand.lastlist~=list then
             local index = #cardlists[list]
             local newIndex = index+1
             for i,v in ipairs(cardonhand) do
@@ -1761,6 +1761,28 @@ function allVisibleMakeMove()
                 cardAnimate["pile"..pile] = temp
                 table.remove(cardlitter,#cardlitter)
                 break
+            elseif list~=false then
+                local index = #cardlists[list]
+                local newIndex = index+1
+                for i,v in ipairs({card}) do
+                    v.visible=true
+                    cardlists[list][index+i] = v
+                end
+                addPoints(2)
+                playSound("move")
+                clickSendCD=0
+                local tempx = (5+#cardlitter%3+1) * (cardw+androidInterSpacing) - androidSpacing
+                local cardx = tempx - (#cardlitter%3+1)*cardw*0.75 - (100-androidSpacing)
+                local cardy = cardh-cardh+cardfontsize+5 + androidOverhead
+                local x = tonumber(list) * (cardw+androidInterSpacing) - androidSpacing
+                local y = tonumber(newIndex) * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
+                if system=="Android" then cardx=cardx+screenw/10 end
+                local m = math.atan2(y-(cardy),x-(cardx+cardw/2))
+                local width=35*math.cos(m)
+                local height=35*math.sin(m)
+                local temp = {cards={card},cardx=cardx+cardw/2,cardy=cardy,x=x,y=y,width=width,height=height}
+                cardAnimate["list"..list..":"..newIndex] = temp
+                table.remove(cardlitter,#cardlitter)
             else
                 if #cardstacks>0 then
                     local card = cardstacks[#cardstacks]
