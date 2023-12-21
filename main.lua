@@ -1852,6 +1852,16 @@ function checkNullPiles()
         if cardpile[i] then
             if #cardpile[i] == 0 then
                 table.remove(cardpile,i)
+            else
+                local localSuit = ""
+                for k,v in ipairs(cardpile[i]) do
+                    if k==1 then localSuit=v.suit end
+                    if v.suit~=localSuit then
+                        table.insert(cardstacks,v)
+                        table.remove(cardpile[i],k)
+                    end
+                end
+
             end
         end
     end
