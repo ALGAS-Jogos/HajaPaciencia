@@ -23,9 +23,9 @@
     - Checar se o jogo está funcionando como deveria mesmo se as cartas são arrastadas e não clicadas
     - Limpar o código
 - Auto-vitória
-    - Corrigir o bug que o algoritmo cicla as cartas no stack sem fazer nada de útil com elas
+    - ~~Corrigir o bug que o algoritmo cicla as cartas no stack sem fazer nada de útil com elas~~
 - Reis
-    - Corrigir o bug que reis na primeira carta da lista não tem o movimento certo quando clicados
+    - ~~Corrigir o bug que reis na primeira carta da lista não tem o movimento certo quando clicados~~
 - Pontos
     - Corrigir o bug de pontos infinitos
     - Ajustar a fórmula de pontos
