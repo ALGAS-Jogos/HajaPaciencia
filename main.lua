@@ -59,6 +59,8 @@ allVisible = false
 winning = false
 winningCD = 0
 
+pileCheckCD = 0
+
 victoryCoins = 0
 
 storeItems = {}
@@ -189,7 +191,6 @@ end
 
 function love.update(dt)
     local mousex,mousey = love.mouse.getPosition()
-    if cardonhand~=nil then clickSendCD = clickSendCD+dt end
     if love.mouse.isDown(1)==false then
         if cardonhand==nil then
         else
@@ -272,6 +273,9 @@ function love.update(dt)
         end
     end
 
+    if cardonhand~=nil then clickSendCD = clickSendCD+dt end
+    pileCheckCD=pileCheckCD+dt
+
     if winning then
         winningCD=winningCD+dt
         if winningCD>=0.1 then
@@ -292,6 +296,11 @@ function love.update(dt)
         if timePunish>=10 then
             timePunish=timePunish-10
             deductPoints(2)
+        end
+
+        if pileCheckCD>=0.8 then
+            checkNullPiles()
+            pileCheckCD=pileCheckCD-0.8
         end
     end
     cardAnimationCD=cardAnimationCD+dt
@@ -1833,6 +1842,16 @@ function unusedAddCards()
             end
             if i==4 and j==13 then
                 return false
+            end
+        end
+    end
+end
+
+function checkNullPiles()
+    for i=1,4 do
+        if cardpile[i] then
+            if #cardpile[i] == 0 then
+                table.remove(cardpile,i)
             end
         end
     end
