@@ -33,3 +33,5 @@
     - Ajustar a fórmula de pontos
 - Tempo
     - ~~Fazer o tempo não contar quando o app está fora de foco~~
+- Escalar
+    - ~~Consertar a escala do jogo em celulares com tamanho diferente do meu~~

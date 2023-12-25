@@ -53,7 +53,8 @@ function loadStoreBacks()
         {name="Starry night",price=350,bought=false,fontName="fonts/Tektur.ttf",font="fonts/Tektur.ttf",imgName="backgrounds/back6.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Sunrise",price=450,bought=false,fontName="fonts/Outfit.ttf",font="fonts/Outfit.ttf",imgName="backgrounds/back7.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Black Hole Sun",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="backgrounds/back8.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Forest Sky",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back9.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}}
+        {name="Forest Sky",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back9.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Christmas Dog",price=650,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back10.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}}
     }
     return obj
 end

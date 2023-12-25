@@ -8,6 +8,7 @@ require("utils.utils")
 ordem = {"K","Q","J",10,9,8,7,6,5,4,3,2,"A"}
 cnaipes = {"spades","diamonds","clubs","hearts"}
 
+local actualVersion = "1.4"
 local standard = 392 --my phone width
 
 cardlists = {}
@@ -89,7 +90,8 @@ save = {
     currentTime="0:00",
     moves=0,
     backImg="backgrounds/back1.jpg",
-    backCard="cards/back1.png"
+    backCard="cards/back1.png",
+    version="1.3"
 }
 
 settings = {
@@ -145,8 +147,31 @@ sounds = {
 
 function love.load()
     local temp = readSave()
-    if temp~=nil then 
-        save=temp
+    if temp~=nil then
+        save=temp        
+        if save.version~=actualVersion then --put new shit in updates on the store!!!!
+            local items = loadStoreItems()
+            if #storeItems<#items then
+                for i=#storeItems,#items do
+                    table.insert(storeItems,items[i])
+                end
+            end
+            local backs = loadStoreBacks()
+            if #storeBacks<#backs then
+                for i=#storeBacks,#backs do
+                    table.insert(storeBacks,backs[i])
+                    print("bascshere")
+                end
+            end
+            local cb = loadStoreCB()
+            if #storeCB<#cb then
+                for i=#storeCB,#cb do
+                    table.insert(storeCB,i)
+                    print("CBhere")
+                end
+            end
+            save.version=actualVersion
+        end
         local time = split(save.currentTime,":")
         currentMins=time[1]
         currentSecs=time[2]
