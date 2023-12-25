@@ -8,6 +8,8 @@ require("utils.utils")
 ordem = {"K","Q","J",10,9,8,7,6,5,4,3,2,"A"}
 cnaipes = {"spades","diamonds","clubs","hearts"}
 
+local standard = 392 --my phone width
+
 cardlists = {}
 cardstacks = {}
 cardpile = {}
@@ -160,29 +162,25 @@ function love.load()
         love.window.setMode(800,750)
         screenw, screenh = love.graphics.getDimensions()
     else
-        suitSize=suitSize/1.8
-        cardw=cardw/2
-        cardh=cardh/2
-        round = 3
-        androidSpacing=50
-        androidOverhead=50
-        androidSmall=0.03
-        androidInterSpacing=5
-        cardfontsize=math.floor(cardfontsize/1.5)
-        cardfont=love.graphics.newFont(cardfontsize)
-        storeRows=3
-        --love.window.maximize()
-        --love.window.setFullscreen(true)
         local wait=true
         while wait do
-
-            --love.timer.sleep(0.01)
-            --love.window.setFullscreen(true)
             love.window.maximize()
             local tx, ty = love.graphics.getDimensions()
             if ty>tx then wait=false end
         end
         screenw, screenh = love.graphics.getDimensions()
+        local scale = screenw/standard
+        suitSize=suitSize/1.8*scale
+        cardw=cardw/2*scale
+        cardh=cardh/2*scale
+        round = 3*scale
+        androidSpacing=50*scale
+        androidOverhead=50*scale
+        androidSmall=0.03*scale
+        androidInterSpacing=5*scale
+        cardfontsize=math.floor(cardfontsize/1.5)*scale
+        cardfont=love.graphics.newFont(cardfontsize)
+        storeRows=3*scale
     end
     resetAllFonts()
     resetImages()
@@ -1864,6 +1862,7 @@ function checkNullPiles()
             end
         end
     end
+    collectgarbage()
 end
 
 
