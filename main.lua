@@ -4,11 +4,12 @@ require("utils.json")
 require("store.store")
 require("utils.draw")
 require("utils.utils")
+require("utils.settings")
 
 ordem = {"K","Q","J",10,9,8,7,6,5,4,3,2,"A"}
 cnaipes = {"spades","diamonds","clubs","hearts"}
 
-local actualVersion = "1.4"
+local actualVersion = "1.5"
 local standard = 392 --my phone width
 
 cardlists = {}
@@ -94,20 +95,9 @@ save = {
     version="1.3"
 }
 
-settings = {
-    hardSetting = {value=50,name="Dificuldade"},
-    backColor = {value="Sem cor",name="Cor do fundo"},
-    animationSpeed = {value=35,name="Vel. Animação"}
-}
-table.sort(settings)
+settings = loadSettings()
 
-possibleBackColors = {
-    ["Sem cor"] = {1,1,1},
-    ["Vermelho"] = {1,0.6,0.6},
-    ["Verde"] = {0.6,1,0.6},
-    ["Azul"] = {0.6,0.6,1},
-    keys = {"Sem cor","Vermelho","Verde","Azul"}
-}
+possibleBackColors = loadPossibleBackColors()
 
 currentSecs = 0
 currentMins = 0
@@ -118,15 +108,15 @@ clickSendCD = 0
 
 cardStyle = {
     color={1,1,1},
-        textcolor={0,0,0},
-        suitcolor={0,0,0},
-        casered={0.6,0,0},
-        backImg=nil,
-        fontName="fonts/Bricolage.ttf",
-        font="fonts/Bricolage.ttf",
-        bought=true,
-        price=0,
-        name="Default"
+    textcolor={0,0,0},
+    suitcolor={0,0,0},
+    casered={0.6,0,0},
+    backImg=nil,
+    fontName="fonts/Bricolage.ttf",
+    font="fonts/Bricolage.ttf",
+    bought=true,
+    price=0,
+    name="Default"
 }
 
 cardAnimate = {}
@@ -236,8 +226,8 @@ function love.update(dt)
                             if not (#actualPile>0) then table.remove(cardpile,pile) end
                         end
                     end
-                    cardonhand=nil
-                    addPoints(2)
+                    if checkIfPileLast(cardonhand.lastlist)==false then addPoints(2) end
+                    cardonhand=nil                    
                     playSound("move")
                 else
                     cardonhand = returnCard()                
@@ -1256,7 +1246,7 @@ function returnCard()
             end
             local behindHidden = makeVisible()
             putLastMove(cardonhand.lastlist,list,#cardonhand,newIndex,behindHidden)
-            addPoints(2)
+            if checkIfPileLast(cardonhand.lastlist)==false then addPoints(2) end
             playSound("move")
             clickSendCD=0
             local x = tonumber(list) * (cardw+androidInterSpacing) - androidSpacing
@@ -1888,6 +1878,10 @@ function checkNullPiles()
         end
     end
     collectgarbage()
+end
+
+function checkIfPileLast(lastlist)
+    if string.match(lastlist,"pile") or lastlist=="litter" then return false else return true end
 end
 
 

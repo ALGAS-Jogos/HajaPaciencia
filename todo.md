@@ -10,7 +10,7 @@
         - Contato
         - Ícone
 - Loja
-    - Arrumar o carregamento dos itens e da loja já salva
+    - ~~Arrumar o carregamento dos itens e da loja já salva~~
     - Adicionar novos itens
     - Ajustar preços
 - Pilhas
