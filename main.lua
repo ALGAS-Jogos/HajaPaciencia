@@ -95,9 +95,11 @@ save = {
     version="1.3"
 }
 
-settings = loadSettings()
-
-possibleBackColors = loadPossibleBackColors()
+settings, settingsLen = loadSettings()
+settingsEraseAll = false
+settingsAllowed = 2
+settingsPage = 1
+settingsPages = math.floor(#settings/settingsAllowed)
 
 currentSecs = 0
 currentMins = 0
@@ -195,10 +197,12 @@ function love.load()
         androidInterSpacing=5*scale
         cardfontsize=math.floor(cardfontsize/1.5)*scale
         cardfont=love.graphics.newFont(cardfontsize)
-        storeRows=3*scale
+        storeRows=3
     end
     resetAllFonts()
     resetImages()
+    settingsAllowed = calculateSettingsToShow()
+    settingsPages = math.floor(settingsLen/settingsAllowed)
     startGame()
 end
 
@@ -298,7 +302,7 @@ function love.update(dt)
         end
     end
 
-    if inVictory==false and inStats==false and inStore==false and wonGame==false and inSettings==false and (love.window.hasMouseFocus() or love.window.hasFocus()) then
+    if inVictory==false and inStats==false and inStore==false and wonGame==false and inSettings==false and (love.window.hasMouseFocus() or love.window.hasFocus()) and settingsEraseAll==false then
         currentCD=currentCD+dt
         timePunish=timePunish+dt
         if currentCD>=1 then
@@ -335,7 +339,7 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if button == 1 then 
-        if inStats==false and inStore==false and inVictory==false and inSettings==false then
+        if inStats==false and inStore==false and inVictory==false and inSettings==false and settingsEraseAll==false then
             if cardonhand==nil then
                 if wonGame==false then
                     clickSendCD=0
@@ -470,51 +474,49 @@ function love.mousepressed(x, y, button, istouch)
             if whatButton=="outside" then
                 inSettings=false
             elseif whatButton=="eraseSave" then
-                eraseSave()
+                --eraseSave()
+                --inSettings=false
+                settingsEraseAll=true
                 inSettings=false
+            elseif whatButton=="nextPage" then
+                settingsPage=math.min(settingsPage+1,settingsPages)
+            elseif whatButton=="prevPage" then
+                settingsPage=math.max(settingsPage-1,1)
             end
             if whatButton.action == "plus" then
                 if whatButton.name=="Cor do fundo" then
-                    local found = false
-                    for i,v in ipairs(possibleBackColors.keys) do
-                        local k=v
-                        if found then
-                            local nextKey = k
-                            settings.backColor.value=nextKey
-                            break
-                        end
-                        if k == settings.backColor.value then
-                            found = true
-                        end
-                        if i==#possibleBackColors.keys then
-                            settings.backColor.value=possibleBackColors.keys[1]
-                            break
-                        end
-                    end
+                    switchNext(settings.backColor)
                 elseif whatButton.name=="Dificuldade" then
-                    settings.hardSetting.value=math.min(settings.hardSetting.value+5,75)
+                    switchNext(settings.hardSetting)
                 elseif whatButton.name=="Vel. Animação" then
-                    settings.animationSpeed.value=math.min(settings.animationSpeed.value+5,50)
+                    stepSetting(settings.animationSpeed,1)
+                elseif whatButton.name=="Volume" then
+                    stepSetting(settings.volume,1)
+                    love.audio.setVolume(settings.volume.value/100)
                 end
             elseif whatButton.action=="minus" then
                 if whatButton.name=="Cor do fundo" then
-                    for i,v in ipairs(possibleBackColors.keys) do
-                        local k=v
-                        if k == settings.backColor.value then
-                            if i==1 then
-                                settings.backColor.value=possibleBackColors.keys[#possibleBackColors.keys]
-                                break
-                            end
-                            local nextKey = possibleBackColors.keys[i-1]
-                            settings.backColor.value=nextKey
-                            break
-                        end
-                    end
+                    switchPrior(settings.backColor)
                 elseif whatButton.name=="Dificuldade" then
-                    settings.hardSetting.value=math.max(settings.hardSetting.value-5,15)
+                    switchPrior(settings.hardSetting)
                 elseif whatButton.name=="Vel. Animação" then
-                    settings.animationSpeed.value=math.max(settings.animationSpeed.value-5,25)
+                    stepSetting(settings.animationSpeed,-1)
+                elseif whatButton.name=="Volume" then
+                    stepSetting(settings.volume,-1)
+                    love.audio.setVolume(settings.volume.value/100)
                 end
+            end
+        elseif settingsEraseAll then
+            local whatButton=settingEraseCollision(x,y)
+            if whatButton=="outside" then
+                settingsEraseAll=false
+                playSound("menu")
+            elseif whatButton=="erase" then
+                playSound("menu")
+                eraseSave()
+                settingsEraseAll=false
+                startGame()
+                playSound("new")
             end
         end
     end
@@ -534,7 +536,7 @@ function love.draw()
     local scaleBackX, scaleBackY = backgroundImg:getDimensions()
     scaleBackX = screenw/scaleBackX
     scaleBackY = screenh/scaleBackY
-    love.graphics.setColor(possibleBackColors[settings.backColor.value])
+    love.graphics.setColor(settings.backColor.possible[settings.backColor.value])
     love.graphics.draw(backgroundImg,0,0,0,scaleBackX,scaleBackY)
 
 
@@ -641,6 +643,7 @@ function love.draw()
     if inVictory then drawVictory() end
     if allVisible and winning==false then drawAllVisible() end
     if inSettings then drawSettings() end
+    if settingsEraseAll then drawSettingsEraseAll() end
 end
 
 --Adds a card at the bottom of a list
@@ -1047,21 +1050,28 @@ function settingsCollision(mx,my)
     local y = screenh/2-height/2+15
     local ySpacing = cardfont:getHeight()-10
     y=y+cardfontsize+ySpacing
-    for k,v in pairs(settings) do
-        y=y+ySpacing+ySpacing+10
-        local nw = cardfont:getWidth("+")+30
-        local nh = cardfont:getHeight()+5
-        local nx = x+width-nw-15
-        --o mais
-        if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
-            return {name=v.name,action="plus"}
+    local count = 0
+    local objective = settingsPage*settingsAllowed-settingsAllowed
+    for i,v in pairs(settings) do
+        count=count+1
+        if count>settingsAllowed*settingsPage then break end
+        if count>objective then
+            y=y+ySpacing+ySpacing+10
+            local nw = cardfont:getWidth("+")+30
+            local nh = cardfont:getHeight()+5
+            local nx = x+width-nw-15
+            --o mais
+            if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
+                return {name=v.name,action="plus"}
+            end
+            nx=x+10
+            if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
+                return {name=v.name,action="minus"}
+            end
+            y=y+cardfontsize+ySpacing+5
         end
-        nx=x+10
-        if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
-            return {name=v.name,action="minus"}
-        end
-        y=y+cardfontsize+ySpacing+5
     end
+
     local nw = cardfont:getWidth("Apagar dados")+30
     local nh = cardfont:getHeight()+5
     local nx = x+15
@@ -1076,6 +1086,25 @@ function settingsCollision(mx,my)
     if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
         return "outside"
     end
+
+    local nw = cardfont:getWidth(">")+15
+    local nh = cardfontsize+10
+    local x = screenw/2+width/2-nw-15
+    local y = screenh/2-height/2+height-nh-15
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "nextPage"
+    end
+    nw = cardfont:getWidth(settingsPage.."/"..settingsPages)+15
+    x = x-nw-5
+    nw = cardfont:getWidth("<")+15
+    x = x-nw-5
+    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+        return "prevPage"
+    end
+
+
+
+    x = screenw/2-width/2
     y = screenh/2-height/2
     if mx >= x and mx <= x+width and my >= y and my <= y+height then 
     else
@@ -1097,6 +1126,41 @@ function allVisibleCollision(mx,my)
         return "clicked"
     end
     return ""
+end
+
+function settingEraseCollision(mx,my)
+        --grey the background out
+        
+        --draw the base rectangle and its border
+        local cellFactor = 2
+        if system=="Android" then cellFactor=1.60 end
+        local width = screenw-(screenw/4)
+        local height = screenh-(screenh/cellFactor)
+        local x = screenw/2-width/2
+        local y = screenh/2-height/2
+        if mx >= x and mx <= x+width and my >= y and my <= y+height then
+        else
+            return "outside"
+        end
+
+        local text = "Não"
+        local nw = cardfont:getWidth(text)+30
+        local nh = height/6
+        local x = screenw/2-width/2+nw/2+5
+        local y = screenh/2+height/2-nh-15
+        if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+            return "outside"
+        end
+
+    
+        local text = "SIM"
+        local nw = cardfont:getWidth(text)+30
+        local nh = height/6
+        local x = screenw/2+width/2-nw-nw/2-5
+        local y = screenh/2+height/2-nh-15
+        if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
+            return "erase"
+        end
 end
 
 --Checks if the suits are opposite colors
@@ -1572,7 +1636,7 @@ function addCards()
     --if unusedAddCards()==false then return true end
     local cards = allCards()
     local limit = 28
-    local hardSetting = settings.hardSetting.value
+    local hardSetting = settings.hardSetting.possible[settings.hardSetting.value]
     for i=1,#cards do
         local toWhere = random(1,100)
         local card = cards[i]
@@ -1691,11 +1755,7 @@ function eraseSave()
         backCard="cards/back1.png"
     }
     
-    settings = {
-        hardSetting = {value=50,name="Dificuldade"},
-        backColor = {value="Sem cor",name="Cor do fundo"},
-        animationSpeed = {value=35,name="Vel. Animação"}
-    }
+    settings = loadSettings()
     storeItems=loadStoreItems()
     storeCB=loadStoreCB()
     storeBacks=loadStoreBacks()
