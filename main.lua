@@ -167,6 +167,7 @@ function love.load()
         local time = split(save.currentTime,":")
         currentMins=time[1]
         currentSecs=time[2]
+        love.audio.setVolume(settings.volume.value/100)
     else
         storeItems=loadStoreItems()
         storeCB=loadStoreCB()
@@ -202,7 +203,8 @@ function love.load()
     resetAllFonts()
     resetImages()
     settingsAllowed = calculateSettingsToShow()
-    settingsPages = math.floor(settingsLen/settingsAllowed)
+    settingsPages = math.floor(settingsLen/settingsAllowed)+1
+    if settingsLen==settingsAllowed then settingsPages=settingsPages-1 end
     startGame()
 end
 
@@ -522,10 +524,12 @@ function love.mousepressed(x, y, button, istouch)
     end
     if allVisible then
         local whatButton = allVisibleCollision(x,y)
-        if whatButton=="clicked" then
+        if whatButton=="clicked" and checkAllVisible() then
             winning=true
             allVisible=false
             winningCD=0
+        else
+            allVisible=false
         end
     end
  end
@@ -1258,7 +1262,7 @@ end
 
 --A organizer function to handle button presses
 function pressButton(btn)
-    if btn==1 then --UNDO
+    if btn==1 and wonGame==false then --UNDO
         getUndo()
     elseif btn==2 then --STATS
         statsButton()
@@ -1270,7 +1274,7 @@ function pressButton(btn)
         startGame()
     elseif btn==4 then --STORE
         storeButton()
-    elseif btn==5 then --REDO
+    elseif btn==5 and wonGame==false then --REDO
         getRedo()
     elseif btn==6 then
         settingsButton()
