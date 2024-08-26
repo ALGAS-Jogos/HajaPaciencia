@@ -1,5 +1,7 @@
 love.graphics.setDefaultFilter("linear","linear",10)
 
+--to rework this game.
+
 require("utils.json")
 require("store.store")
 require("utils.draw")
