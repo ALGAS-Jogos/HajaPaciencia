@@ -345,14 +345,7 @@ function drawStorePrompt()
     y=y-nh*1.5
     nw=inStorePrompt.font:getWidth(inStorePrompt.name)+30
     x = screenw/2-nw/2
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(inStorePrompt.textcolor)
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(newColor)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(inStorePrompt.textcolor)
-    love.graphics.printf(inStorePrompt.name,inStorePrompt.font,x,y+(nh-cardfontsize)/2,nw,"center")
-    love.graphics.setLineWidth(oldThick)
+    drawButtonFont(inStorePrompt.name,inStorePrompt.font,x,y,nw,nh)
 end
 
 function drawAllVisible()
@@ -364,14 +357,7 @@ function drawAllVisible()
     local nh = cardfont:getHeight()+15
     local x = screenw/2-nw/2
     local y = screenh-nh-buttonHeight-20-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
-    love.graphics.setLineWidth(oldThick)
+    drawButton(text,x,y,nw,nh)
 end
 
 function drawVictory()
@@ -626,17 +612,30 @@ function drawSettingsEraseAll()
 end
 
 function drawButton(text,x,y,w,h)
-    love.graphics.setColor(uistyle.btnshading)
+    drawButtonFont(text,cardfont,x,y,w,h)
+end
+
+function drawButtonFont(text,font,x,y,w,h)
+    local color = {
+        shading = uistyle.btnshading,
+        active = uistyle.btnactive,
+        btn = uistyle.btncolor
+    }
+    btn(text,font,x,y,w,h,color)
+end
+
+function btn(text,font,x,y,w,h,color)
+    love.graphics.setColor(color.shading)
     love.graphics.rectangle("fill",x+5,y+5,w,h)
     local mx,my = love.mouse.getPosition()
     if mx >= x and mx <= x+w and my >= y and my <= y+h then
-        love.graphics.setColor(uistyle.btnactive)
+        love.graphics.setColor(color.active)
     else
-        love.graphics.setColor(uistyle.btncolor)
+        love.graphics.setColor(color.btn)
     end
     love.graphics.rectangle("fill",x,y,w,h)
     love.graphics.setColor(uistyle.textcolor)
-    love.graphics.printf(text,cardfont,x,y+(h-cardfont:getHeight())/2,w,"center")
+    love.graphics.printf(text,font,x,y+(h-font:getHeight())/2,w,"center")
 end
 
 function drawPanel(width,height)
