@@ -126,18 +126,10 @@ function stencilRounded()
 end
 
 function drawStore()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.8)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
     --draw the base rectangle and its border
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/3.5)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setLineWidth(oldThick)
+    drawPanel(width,height)
     local ySpacing = cardfontsize+5
     if storeState==1 then
         local y = screenh/2-height/2 + height/25+ySpacing
@@ -207,7 +199,7 @@ function drawStore()
             local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
             if k>storeMax*storeRows then break end
             if k%(storeMax+1)==0 then 
-                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+                y=y+(cardh+cardfont:getHeight()+10*2)*math.floor(k/storeMax)
             end
             if k>storeMax then itr=k%storeMax end
             if itr==0 then itr=storeMax end
@@ -215,31 +207,34 @@ function drawStore()
             local v = storeBacks[k+(storeMax*storeRows*(storePage-1))]
             if v==nil then break end
             storeDrawBack(x,y,v.img)
-            love.graphics.setLineWidth(4)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.setLineWidth(oldThick)
+            local color = {
+                active=uistyle.btnactive,
+                btn=uistyle.btncolor,
+                shading=uistyle.btnshading,
+                text=uistyle.textcolor
+            }
             if v.bought==false then
-                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+                text=v.price
             else
-                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+                text=";D"
+                color.btn=color.active
             end
+            btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
         end
     end
     
     --Dock render
-    love.graphics.setColor(0,0,0,0.8)
     local imgw, imgh = coinImg:getDimensions()
     local scale = (height/8-10)/imgh
     local dockw,dockh = cardfont:getWidth(tostring(save.coins))+(imgw*scale)+15,height/8
     local dockx,docky = screenw/2-width/2+15, screenh/2-height/2+height-dockh-15
-    love.graphics.rectangle("fill",dockx,docky,dockw,dockh,10)
+    love.graphics.setColor(uistyle.btnshading)
+    love.graphics.rectangle("fill",dockx+5,docky+5,dockw,dockh)
+    love.graphics.setColor(uistyle.btncolor)
+    love.graphics.rectangle("fill",dockx,docky,dockw,dockh)
     love.graphics.setColor(0.7,0.7,0.2,1)
     love.graphics.draw(coinImg, dockx+5, docky+5, 0, scale)
-    love.graphics.setColor(1,1,1,1)
+    love.graphics.setColor(uistyle.textcolor)
     love.graphics.print(tostring(save.coins),cardfont,dockx+(coinImg:getWidth()*scale)+5,docky+(math.abs(cardfontsize-dockh))/2)
 
     --Buttons
@@ -250,15 +245,16 @@ function drawStore()
     local nh = cardfontsize+10
     for i=1,3 do
         local x = (i-1)*(nw+spacing)+spacing
+        local color = {
+            active=uistyle.btnactive,
+            btn=uistyle.btncolor,
+            shading=uistyle.btnshading,
+            text=uistyle.textcolor
+        }
         if i==storeState then
-            love.graphics.setLineWidth(6)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y,nw,nh,5)
+            color.btn=color.active
         end
-        love.graphics.setColor(0, 0.239, 0.063)
-        love.graphics.rectangle("fill",x,y,nw,nh,5)
-        love.graphics.setColor(1,1,1,1)
-        love.graphics.printf(storeButtons[i],cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+        btn(storeButtons[i],cardfont,x,y,nw,nh,color)
     end
 
     --pages
@@ -266,44 +262,26 @@ function drawStore()
     local nh = cardfontsize+10
     local x = screenw/2+width/2-nw-15
     local y = screenh/2-height/2+height-dockh
-    love.graphics.setLineWidth(6)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(">",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    drawButton(">",x,y,nw,nh)
     nw = cardfont:getWidth(storePage.."/"..storePages)+15
     x = x-nw-5
     love.graphics.printf(storePage.."/"..storePages,cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
     nw = cardfont:getWidth("<")+15
     x = x-nw-5
-    love.graphics.setLineWidth(6)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("<",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    drawButton("<",x,y,nw,nh)
 
 
     love.graphics.setLineWidth(oldThick)
 end
 
 function drawStorePrompt()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
+   
     --draw the base rectangle and its border
     local cellFactor = 2
     if system=="Android" then cellFactor=1.60 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    drawPanel(width,height)
 
     love.graphics.setLineWidth(oldThick)
     if storeState==1 then
@@ -332,20 +310,20 @@ function drawStorePrompt()
     local nh = height/6
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+    drawButton(text,x,y,nw,nh)
 
 
     local newColor = {inStorePrompt.color[1],inStorePrompt.color[2],inStorePrompt.color[3]}
+    local color = {
+        active = {newColor[1]+0.130,newColor[2]+0.130,newColor[3]+0.130},
+        btn = newColor,
+        shading = {newColor[1]-0.130,newColor[2]-0.130,newColor[3]-0.130},
+        text = inStorePrompt.textcolor
+    }
     y=y-nh*1.5
     nw=inStorePrompt.font:getWidth(inStorePrompt.name)+30
     x = screenw/2-nw/2
-    drawButtonFont(inStorePrompt.name,inStorePrompt.font,x,y,nw,nh)
+    btn(inStorePrompt.name,inStorePrompt.font,x,y,nw,nh,color)
 end
 
 function drawAllVisible()
@@ -619,7 +597,8 @@ function drawButtonFont(text,font,x,y,w,h)
     local color = {
         shading = uistyle.btnshading,
         active = uistyle.btnactive,
-        btn = uistyle.btncolor
+        btn = uistyle.btncolor,
+        text = uistyle.textcolor
     }
     btn(text,font,x,y,w,h,color)
 end
@@ -634,7 +613,7 @@ function btn(text,font,x,y,w,h,color)
         love.graphics.setColor(color.btn)
     end
     love.graphics.rectangle("fill",x,y,w,h)
-    love.graphics.setColor(uistyle.textcolor)
+    love.graphics.setColor(color.text)
     love.graphics.printf(text,font,x,y+(h-font:getHeight())/2,w,"center")
 end
 
