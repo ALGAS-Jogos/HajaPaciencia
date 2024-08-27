@@ -375,19 +375,12 @@ function drawAllVisible()
 end
 
 function drawVictory()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
-    --draw the base rectangle and its border
+
     local cellFactor = 2.60
     if system=="Android" then cellFactor=2 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    panelWrapper("Vitória",width,height)
 
     --some of the calculus
     local timeBonus = 0
@@ -410,138 +403,82 @@ function drawVictory()
     local x = screenw/2-width/2
     local y = screenh/2-height/2+15
     local ySpacing = 12
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Vitória!",cardfont,x,y,width,"center")
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    drawLine(x+10,y,width-20)
     y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Tempo",cardfont,x+10,y,width,"left")
+    
     local sec=tostring(currentSecs)
     if tonumber(sec)<10 then sec="0"..sec end
     local text = currentMins..":"..sec
     if timeBonus>0 then text = "+"..timeBonus.." "..text end
     if timeBonus<0 then text = timeBonus.." "..text end
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Tempo",text,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    drawLine(x+10,y,width-20)
     y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Movimentos",cardfont,x+10,y,width,"left")
     local text = save.moves
     if movBonus>0 then text = "+"..movBonus.." "..text end
     if movBonus<0 then text = movBonus.." "..text end
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Movimentos",text,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    drawLine(x+10,y,width-20)
     y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Pontos",cardfont,x+10,y,width,"left")
-    local text = save.points
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Pontos",save.points,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    drawLine(x+10,y,width-20)
     y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Moedas",cardfont,x+10,y,width,"left")
     local text = "+"..victoryCoins
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Moedas",text,x,y,width)
 
     --botão de jogar denovo
     local nw = cardfont:getWidth("Jogar denovo")+30
     local nh = height/6
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("Jogar denovo",cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
-    love.graphics.setLineWidth(oldThick)
+    drawButton("Jogar denovo")
 end
 
 function drawStats()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
     --draw the base rectangle and its border
     local cellFactor = 3
     if system=="Android" then cellFactor=2 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    panelWrapper("Estatísticas",width,height)
 
     --victory label
     local x = screenw/2-width/2
     local y = screenh/2-height/2+15
     local ySpacing = 12
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Estatísticas",cardfont,x,y,width,"center")
+    
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
+    drawLine(x+10,y,width-20)
     y=y+ySpacing
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Menor tempo",cardfont,x+10,y,width,"left")
-    local text = save.lowTime
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Menor tempo",save.lowTime,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.printf("Maior tempo",cardfont,x+10,y,width,"left")
-    local text = save.highTime
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Maior tempo",save.highTime,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.printf("Tempo total",cardfont,x+10,y,width,"left")
-    local text = save.totalTime
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Tempo total",save.totalTime,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    love.graphics.setColor(1,1,1)
+    drawLine(x+10,y,width-20)
     y=y+ySpacing
-    love.graphics.printf("Partidas jogadas",cardfont,x+10,y,width,"left")
-    local text = save.totalGames
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Partidas jogadas",save.totalGames,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.printf("Partidas ganhas",cardfont,x+10,y,width,"left")
-    local text = save.totalWins
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Partidas ganhas",save.totalWins,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.printf("Partidas perdidas",cardfont,x+10,y,width,"left")
-    local text = save.totalLoss
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Partidas perdidas",save.totalLoss,x,y,width)
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
-    love.graphics.setColor(1,1,1)
+    drawLine(x+10,y,width-20)
     y=y+ySpacing
-    love.graphics.printf("Maior pontuação",cardfont,x+10,y,width,"left")
-    local text = save.highScore
-    love.graphics.printf(text,cardfont,x,y,width-10,"right")
+    statWrapper("Maior pontuação",save.highScore,x,y,width)
 
-    --botão de jogar denovo
     local nw = cardfont:getWidth("Voltar")+30
     local nh = cardfont:getHeight()+10
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("Voltar",cardfont,x,y+5,nw,"center")
-    love.graphics.setLineWidth(oldThick)
+    drawButton("Voltar",x,y,nw,nh)
 end
+
 --Same as drawCard but it also takes a cardStyle input
 function storeDrawCard(number,suit,x,y,cardStyle)
     local colortext = cardStyle.textcolor
@@ -597,28 +534,18 @@ function storeDrawBack(x,y,img)
 end
 
 function drawSettings()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
     --draw the base rectangle and its border
     local cellFactor = 2.8
     if system=="Android" then cellFactor=2.4 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    
+    panelWrapper("Configurações",width,height)
 
     local x = screenw/2-width/2
     local y = screenh/2-height/2+15
     local ySpacing = cardfont:getHeight()-10
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Configurações",cardfont,x,y,width,"center")
     y=y+cardfontsize+ySpacing
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("fill",x+10,y,width-20,5,5)
     local count = 0
     local objective = settingsPage*settingsAllowed-settingsAllowed
     for i,v in pairs(settings) do
@@ -632,26 +559,12 @@ function drawSettings()
             local nw = cardfont:getWidth("+")+30
             local nh = cardfont:getHeight()+5
             local nx = x+width-nw-15
-            love.graphics.setLineWidth(5)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",nx,y,nw,nh,5)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",nx,y,nw,nh,5)
-            love.graphics.setColor(1,1,1)
-            love.graphics.printf("+",cardfont,nx,y+2.5,nw,"center")
+            drawButton("+",nx,y+2.5,nw,nh)
             nx=x+10
-            love.graphics.setLineWidth(5)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",nx,y,nw,nh,5)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",nx,y,nw,nh,5)
-            love.graphics.setColor(1,1,1)
-            love.graphics.printf("-",cardfont,nx,y+2.5,nw,"center")
+            drawButton("-",nx,y+2.5,nw,nh)
             love.graphics.setColor(1,1,1)
             love.graphics.printf(v.value,cardfont,x,y,width,"center")
             y=y+cardfontsize+ySpacing+5
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("fill",x+10,y,width-20,5,5)
         end
     end
 
@@ -659,50 +572,26 @@ function drawSettings()
     local nh = cardfont:getHeight()+5
     local nx = x+15
     y=screenh/2+height/2-nh-15-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",nx,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",nx,y,nw,nh,5)
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Apagar dados",cardfont,nx,y+2.5,nw,"center")
+    drawButton("Apagar dados",nx,y,nw,nh)
 
     local nw = cardfont:getWidth("Voltar")+30
     local nh = cardfont:getHeight()+5
     local nx = x+15
     y=screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",nx,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",nx,y,nw,nh,5)
-    love.graphics.setColor(1,1,1)
-    love.graphics.printf("Voltar",cardfont,nx,y+2.5,nw,"center")
+    drawButton("Voltar",nx,y,nw,nh)
     --reset button
 
     local nw = cardfont:getWidth(">")+15
     local nh = cardfontsize+10
     local x = screenw/2+width/2-nw-15
     local y = screenh/2-height/2+height-nh-15
-    love.graphics.setLineWidth(6)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(">",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    drawButton(">",x,y,nw,nh)
     nw = cardfont:getWidth(settingsPage.."/"..settingsPages)+15
     x = x-nw-5
     love.graphics.printf(settingsPage.."/"..settingsPages,cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
     nw = cardfont:getWidth("<")+15
     x = x-nw-5
-    love.graphics.setLineWidth(6)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf("<",cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
+    drawButton("<",x,y,nw,nh)
 
 
     love.graphics.setColor(1,1,1)
@@ -710,19 +599,11 @@ function drawSettings()
 end
 
 function drawSettingsEraseAll()
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
-    --draw the base rectangle and its border
     local cellFactor = 2
     if system=="Android" then cellFactor=1.60 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
-    love.graphics.setLineWidth(7)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",screenw/2-width/2,screenh/2-height/2,width,height,5)
-    love.graphics.setColor(love.math.colorFromBytes(24, 135, 54))
-    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height,5)
+    drawPanel(width,height)
 
     local x = screenw/2-width/2
     local y = screenh/2-height/2+5
@@ -736,27 +617,63 @@ function drawSettingsEraseAll()
     local nh = height/6
     local x = screenw/2-width/2+nw/2+5
     local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(0, 0.239, 0.063)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+    drawButton(text,x,y,nw,nh)
 
-    local text = "SIM"
+    local text = "Sim"
     local nw = cardfont:getWidth(text)+30
-    local nh = height/6
     local x = screenw/2+width/2-nw-nw/2-5
-    local y = screenh/2+height/2-nh-15
-    love.graphics.setLineWidth(5)
-    love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-    love.graphics.rectangle("line",x,y,nw,nh,5)
-    love.graphics.setColor(1,0.2,0.2)
-    love.graphics.rectangle("fill",x,y,nw,nh,5)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.printf(text,cardfont,x,y+(nh-cardfontsize)/2,nw,"center")
+    drawButton(text,x,y,nw,nh)
+end
 
+function drawButton(text,x,y,w,h)
+    love.graphics.setColor(uistyle.btnshading)
+    love.graphics.rectangle("fill",x+5,y+5,w,h)
+    local mx,my = love.mouse.getPosition()
+    if mx >= x and mx <= x+w and my >= y and my <= y+h then
+        love.graphics.setColor(uistyle.btnactive)
+    else
+        love.graphics.setColor(uistyle.btncolor)
+    end
+    love.graphics.rectangle("fill",x,y,w,h)
+    love.graphics.setColor(uistyle.textcolor)
+    love.graphics.printf(text,cardfont,x,y+(h-cardfont:getHeight())/2,w,"center")
+end
+
+function drawPanel(width,height)
+    --gray background
+    love.graphics.setColor(uistyle.grayback)
+    love.graphics.rectangle('fill',0,0,screenw,screenh)
+
+    love.graphics.setColor(uistyle.backshading)
+    love.graphics.rectangle("fill",screenw/2-width/2+5,screenh/2-height/2+5,width,height)
+
+    love.graphics.setColor(uistyle.backcolor)
+    love.graphics.rectangle("fill",screenw/2-width/2,screenh/2-height/2,width,height)
+end
+
+function panelWrapper(text,width,height)
+    drawPanel(width,height)
+    love.graphics.setColor(uistyle.textcolor)
+    local x = screenw/2-width/2+10
+    local y = screenh/2-height/2+15
+    love.graphics.printf(text,cardfont,x,y,width,"center")
+    love.graphics.setColor(uistyle.btncolor)
+    local y = screenh/2-height/2+cardfont:getHeight()*1.2+15
+    love.graphics.rectangle("fill",x,y,width-20,5)
+end
+
+function statWrapper(left,right,x,y,width)
+    love.graphics.setColor(uistyle.textcolor)
+    love.graphics.printf(left,cardfont,x+10,y,width,"left")
+    love.graphics.printf(right,cardfont,x,y,width-10,"right")
+end
+
+function drawLine(x,y,w)
+    love.graphics.setColor(uistyle.btncolor)
+    love.graphics.rectangle("fill",x,y,w,5)
+end
+
+function resetDrawValues()
     love.graphics.setColor(1,1,1)
     love.graphics.setLineWidth(oldThick)
 end
