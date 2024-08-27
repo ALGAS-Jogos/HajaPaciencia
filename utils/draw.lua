@@ -127,8 +127,10 @@ end
 
 function drawStore()
     --draw the base rectangle and its border
+    local cellFactor = 4
+    if system=="Android" then cellFactor=3.5 end
     local width = screenw-(screenw/8)
-    local height = screenh-(screenh/3.5)
+    local height = screenh-(screenh/cellFactor)
     drawPanel(width,height)
     local ySpacing = cardfontsize+5
     if storeState==1 then
@@ -141,7 +143,7 @@ function drawStore()
             local currentRow = math.ceil(k/storeMax)
             if k>storeMax*storeRows then break end
             if k==(storeMax*(currentRow-1)+1) then 
-                y=y+(cardh+cardfontsize+16)
+                y=y+(cardh+cardfont:getHeight()+10*2)
             end
             if k>storeMax then itr=k%storeMax end
             if itr==0 then itr=storeMax end
@@ -149,18 +151,19 @@ function drawStore()
             local v = storeItems[k+(storeMax*storeRows*(storePage-1))]
             if v==nil then break end
             storeDrawCard("K","spades",x,y,v)
-            love.graphics.setLineWidth(4)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.setLineWidth(oldThick)
+            local color = {
+                active=uistyle.btnactive,
+                btn=uistyle.btncolor,
+                shading=uistyle.btnshading,
+                text=uistyle.textcolor
+            }
             if v.bought==false then
-                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+                text=v.price
             else
-                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+                text=";D"
+                color.btn=color.active
             end
+            btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
         end
     elseif storeState==2 then
         local y = screenh/2-height/2 + height/25+ySpacing
@@ -170,7 +173,7 @@ function drawStore()
             local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
             if k>storeMax*storeRows then break end
             if k%(storeMax+1)==0 then 
-                y=y+(cardh+cardfontsize+16)*math.floor(k/storeMax)
+                y=y+(cardh+cardfont:getHeight()+10*2)*math.floor(k/storeMax)
             end
             if k>storeMax then itr=k%storeMax end
             if itr==0 then itr=storeMax end
@@ -178,18 +181,19 @@ function drawStore()
             local v = storeCB[k+(storeMax*storeRows*(storePage-1))]
             if v==nil then break end
             storeDrawBack(x,y,v.img)
-            love.graphics.setLineWidth(4)
-            love.graphics.setColor(love.math.colorFromBytes(237, 234, 28))
-            love.graphics.rectangle("line",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(0, 0.239, 0.063)
-            love.graphics.rectangle("fill",x,y+cardh+2,cardw,cardfontsize+6,round)
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.setLineWidth(oldThick)
+            local color = {
+                active=uistyle.btnactive,
+                btn=uistyle.btncolor,
+                shading=uistyle.btnshading,
+                text=uistyle.textcolor
+            }
             if v.bought==false then
-                love.graphics.printf(tostring(v.price),cardfont,x,y+cardh+3,cardw,"center")
+                text=v.price
             else
-                love.graphics.printf(";D",cardfont,x,y+cardh+3,cardw,"center")
+                text=";D"
+                color.btn=color.active
             end
+            btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
         end
     elseif storeState==3 then
         local y = screenh/2-height/2 + height/25+ySpacing
