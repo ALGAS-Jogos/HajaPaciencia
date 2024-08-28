@@ -727,8 +727,10 @@ end
 
 --Collision of the store
 function storeCollision(mx,my)
+    local cellFactor = 4
+    if system=="Android" then cellFactor=3.5 end
     local width = screenw-(screenw/8)
-    local height = screenh-(screenh/3.5)
+    local height = screenh-(screenh/cellFactor)
     local dockh = height/8
 
     local nw = cardfont:getWidth(storeButtons[1])+15

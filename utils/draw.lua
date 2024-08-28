@@ -125,6 +125,8 @@ function stencilRounded()
     love.graphics.rectangle("fill",GLOBALBACKX,GLOBALBACKY,cardw,cardh,round)
 end
 
+
+
 function drawStore()
     --draw the base rectangle and its border
     local cellFactor = 4
@@ -134,97 +136,14 @@ function drawStore()
     drawPanel(width,height)
     local ySpacing = cardfontsize+5
     if storeState==1 then
-        local y = screenh/2-height/2 + height/25+ySpacing
-        y=y-(cardh+cardfontsize+16)
-        for k=1,#storeItems do            
-            local itr = k
-            local spacing = ((width-cardw*storeMax))/storeMax
-            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
-            local currentRow = math.ceil(k/storeMax)
-            if k>storeMax*storeRows then break end
-            if k==(storeMax*(currentRow-1)+1) then 
-                y=y+(cardh+cardfont:getHeight()+10*2)
-            end
-            if k>storeMax then itr=k%storeMax end
-            if itr==0 then itr=storeMax end
-            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-            local v = storeItems[k+(storeMax*storeRows*(storePage-1))]
-            if v==nil then break end
-            storeDrawCard("K","spades",x,y,v)
-            local color = {
-                active=uistyle.btnactive,
-                btn=uistyle.btncolor,
-                shading=uistyle.btnshading,
-                text=uistyle.textcolor
-            }
-            if v.bought==false then
-                text=v.price
-            else
-                text=";D"
-                color.btn=color.active
-            end
-            btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
-        end
+        local y = screenh/2-height/2 + height/25+ySpacing      
+        storeDraw(storeItems,y,width,height)
     elseif storeState==2 then
         local y = screenh/2-height/2 + height/25+ySpacing
-        for k=1,#storeCB do            
-            local itr = k
-            local spacing = ((width-cardw*storeMax))/storeMax
-            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
-            if k>storeMax*storeRows then break end
-            if k%(storeMax+1)==0 then 
-                y=y+(cardh+cardfont:getHeight()+10*2)*math.floor(k/storeMax)
-            end
-            if k>storeMax then itr=k%storeMax end
-            if itr==0 then itr=storeMax end
-            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-            local v = storeCB[k+(storeMax*storeRows*(storePage-1))]
-            if v==nil then break end
-            storeDrawBack(x,y,v.img)
-            local color = {
-                active=uistyle.btnactive,
-                btn=uistyle.btncolor,
-                shading=uistyle.btnshading,
-                text=uistyle.textcolor
-            }
-            if v.bought==false then
-                text=v.price
-            else
-                text=";D"
-                color.btn=color.active
-            end
-            btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
-        end
+        storeDraw(storeCB,y,width,height)
     elseif storeState==3 then
         local y = screenh/2-height/2 + height/25+ySpacing
-        for k=1,#storeBacks do            
-            local itr = k
-            local spacing = ((width-cardw*storeMax))/storeMax
-            local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
-            if k>storeMax*storeRows then break end
-            if k%(storeMax+1)==0 then 
-                y=y+(cardh+cardfont:getHeight()+10*2)*math.floor(k/storeMax)
-            end
-            if k>storeMax then itr=k%storeMax end
-            if itr==0 then itr=storeMax end
-            local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
-            local v = storeBacks[k+(storeMax*storeRows*(storePage-1))]
-            if v==nil then break end
-            storeDrawBack(x,y,v.img)
-            local color = {
-                active=uistyle.btnactive,
-                btn=uistyle.btncolor,
-                shading=uistyle.btnshading,
-                text=uistyle.textcolor
-            }
-            if v.bought==false then
-                text=v.price
-            else
-                text=";D"
-                color.btn=color.active
-            end
-            btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
-        end
+        storeDraw(storeBacks,y,width,height)
     end
     
     --Dock render
@@ -658,4 +577,36 @@ end
 function resetDrawValues()
     love.graphics.setColor(1,1,1)
     love.graphics.setLineWidth(oldThick)
+end
+
+function storeDraw(table,giveny,width,height)
+    local y = giveny
+    for k=1,#table do
+        local itr = k
+        local spacing = ((width-cardw*storeMax))/storeMax
+        local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
+        if k>storeMax*storeRows then break end
+        if k%(storeMax+1)==0 then
+            y=y+(cardh+cardfont:getHeight()+10*2)*math.floor(k/storeMax)
+        end
+        if k>storeMax then itr=k%storeMax end
+        if itr==0 then itr=storeMax end
+        local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
+        local v = table[k+(storeMax*storeRows*(storePage-1))]
+        if v==nil then break end
+        if v.img~=nil then storeDrawBack(x,y,v.img) else storeDrawCard("K","spades",x,y,v) end
+        local color = {
+            active=uistyle.btnactive,
+            btn=uistyle.btncolor,
+            shading=uistyle.btnshading,
+            text=uistyle.textcolor
+        }
+        if v.bought==false then
+            text=v.price
+        else
+            text=";D"
+            color.btn=color.active
+        end
+        btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
+    end
 end
