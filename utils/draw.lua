@@ -177,7 +177,19 @@ function drawStore()
         if i==storeState then
             color.btn=color.active
         end
-        btn(storeButtons[i],cardfont,x,y,nw,nh,color)
+        btn(storeButtons[i],cardfont,x,y,nw,nh,color,function ()
+            local whatButton = i
+            storeState=whatButton
+            storePage=1
+            if storeState==1 then
+                storePages=math.ceil(#storeItems/(storeMax*storeRows))
+            elseif storeState==2 then
+                storePages=math.ceil(#storeCB/(storeMax*storeRows))
+            elseif storeState==3 then
+                storePages=math.ceil(#storeBacks/(storeMax*storeRows))
+            end
+            return true
+        end)
     end
 
     --pages
@@ -193,6 +205,10 @@ function drawStore()
     x = x-nw-5
     drawButton("<",x,y,nw,nh)
 
+    drawExitButton(width,height,function ()
+        inStore=false
+        return true
+    end)
 
     love.graphics.setLineWidth(oldThick)
 end
@@ -223,14 +239,10 @@ function drawStorePrompt()
         storeDrawBack(x,y,inStorePrompt.img)
     end
 
-    local text = "Comprar"
-    if save.coins<inStorePrompt.price then text="Sem dinheiro" end
     local nw = cardfont:getWidth(text)+30
     local nh = height/6
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
-    drawButton(text,x,y,nw,nh)
-
 
     local newColor = {inStorePrompt.color[1],inStorePrompt.color[2],inStorePrompt.color[3]}
     local color = {
@@ -244,16 +256,34 @@ function drawStorePrompt()
     x = screenw/2-nw/2
     btn(inStorePrompt.name,inStorePrompt.font,x,y,nw,nh,color)
 
-    local nw,nh=30,30
-    local color = {
-        active=uistyle.exitactive,
-        btn=uistyle.exitcolor,
-        shading=uistyle.exitshading,
-        text=uistyle.white
-    }
-    btn("X",cardfont,screenw/2+width/2-nw-10,screenh/2-height/2+10,nw,nh,color,function ()
+    local text = "Comprar"
+    if save.coins<inStorePrompt.price then text="Sem dinheiro" end
+    local nw = cardfont:getWidth(text)+30
+    local nh = height/6
+    local x = screenw/2-nw/2
+    local y = screenh/2+height/2-nh-15
+    drawButton(text,x,y,nw,nh, function ()
+        if storeState==1 then
+            cardStyle=inStorePrompt
+            storeItems[inStorePrompt.index].bought = true
+        elseif storeState==2 then
+            cardBack=inStorePrompt.img
+            save.backCard=inStorePrompt.imgName
+            storeCB[inStorePrompt.index].bought=true
+        elseif storeState==3 then
+            changeBack(inStorePrompt.img)
+            save.backImg=inStorePrompt.imgName
+            storeBacks[inStorePrompt.index].bought=true
+        end
+        save.coins=save.coins-inStorePrompt.price
         inStorePrompt=nil
-        mouseReleasedPos=nil
+        inStore=false
+        return true
+    end)
+
+    drawExitButton(width,height,function ()
+        inStorePrompt=nil
+        return true
     end)
 end
 
@@ -330,7 +360,10 @@ function drawVictory()
     local nh = height/6
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
-    drawButton("Jogar denovo")
+    drawButton("Jogar denovo",x,y,nw,nh,function ()
+        pressButton(3)
+        inVictory=false
+    end)
 end
 
 function drawStats()
@@ -375,27 +408,27 @@ function drawStats()
 end
 
 --Same as drawCard but it also takes a cardStyle input
-function storeDrawCard(number,suit,x,y,cardStyle)
-    if cardStyle==nil then return nil end
-    local colortext = cardStyle.textcolor
-    local colorsuit = cardStyle.suitcolor
+function storeDrawCard(number,suit,x,y,insideCardStyle,index)
+    if insideCardStyle==nil then return nil end
+    local colortext = insideCardStyle.textcolor
+    local colorsuit = insideCardStyle.suitcolor
     if suit=="diamonds" or suit=="hearts" then
-        colortext=cardStyle.casered
-        colorsuit=cardStyle.casered
+        colortext=insideCardStyle.casered
+        colorsuit=insideCardStyle.casered
     end
     love.graphics.setColor(0,0,0)
     love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(cardStyle.color)
+    love.graphics.setColor(insideCardStyle.color)
     love.graphics.rectangle("fill",x,y,cardw,cardh,round)
-    if cardStyle.backImg then
-        local imgw, imgh = cardStyle.backImg:getDimensions()
+    if insideCardStyle.backImg then
+        local imgw, imgh = insideCardStyle.backImg:getDimensions()
         local scaleX = cardw/imgw
         local scaleY = cardh/imgh
-        love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
+        love.graphics.draw(insideCardStyle.backImg,x,y,0,scaleX,scaleY)
     end
     love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),cardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
-    love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
+    love.graphics.print(tostring(number),insideCardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
+    love.graphics.printf(tostring(number),insideCardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
     love.graphics.setColor(colorsuit)
 
     local smallSuitSize = suitSize-(suitSize*0.6)
@@ -415,14 +448,20 @@ function storeDrawCard(number,suit,x,y,cardStyle)
     if mouseReleasedPos~=nil and inStorePrompt==nil then
         local mx,my = mouseReleasedPos.x,mouseReleasedPos.y
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
-            inStorePrompt=cardStyle
+            if insideCardStyle.bought then
+                cardStyle=insideCardStyle
+            else
+                v["index"] = index
+                inStorePrompt=insideCardStyle
+            end
             mouseReleasedPos=nil
+            playSound("menu")
         end
     end
 end
 
 --Same as drawBack but it also takes an image as a back image
-function storeDrawBack(x,y,img,v)
+function storeDrawBack(x,y,img,v,index)
     love.graphics.setColor(0,0,0)
     love.graphics.rectangle("line",x,y,cardw,cardh,round)
     love.graphics.setColor(1,1,1)
@@ -439,8 +478,20 @@ function storeDrawBack(x,y,img,v)
     if mouseReleasedPos~=nil and inStorePrompt==nil then
         local mx,my = mouseReleasedPos.x,mouseReleasedPos.y
         if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
-            inStorePrompt=v
+            if v.bought then
+                if storeState==2 then
+                    cardBack=v.img
+                    save.backCard=v.imgName
+                elseif storeState==3 then
+                    changeBack(v.img)
+                    save.backImg=v.imgName
+                end
+            else
+                v["index"] = index
+                if inStorePrompt==nil then inStorePrompt=v end
+            end
             mouseReleasedPos=nil
+            playSound("menu")
         end
     end
 end
@@ -567,8 +618,10 @@ function btn(text,font,x,y,w,h,color,fun)
     if mouseReleasedPos~=nil then
         local mx,my = mouseReleasedPos.x,mouseReleasedPos.y
         if mx >= x and mx <= x+w and my >= y and my <= y+h then
-            fn()
-            mouseReleasedPos=nil
+            if fn() then
+                mouseReleasedPos=nil
+                playSound("menu")
+            end
         end
     end
     love.graphics.rectangle("fill",x,y,w,h)
@@ -630,7 +683,8 @@ function storeDraw(table,giveny,width,height)
         local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
         local v = table[k+(storeMax*storeRows*(storePage-1))]
         if v==nil then break end
-        if v.img~=nil then storeDrawBack(x,y,v.img,v) else storeDrawCard("K","spades",x,y,v) end
+        local index = k+((storeMax*storeRows)*(storePage-1))
+        if v.img~=nil then storeDrawBack(x,y,v.img,v,index) else storeDrawCard("K","spades",x,y,v,index) end
         local color = {
             active=uistyle.btnactive,
             btn=uistyle.btncolor,
@@ -644,7 +698,36 @@ function storeDraw(table,giveny,width,height)
             color.btn=color.active
         end
         btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color,function ()
-            if inStorePrompt==nil then inStorePrompt=v end
+            if inStorePrompt==nil then
+                if v.bought then
+                    if storeState==1 then
+                        cardStyle=v
+                    elseif storeState==2 then
+                        cardBack=v.img
+                        save.backCard=v.imgName
+                    elseif storeState==3 then
+                        changeBack(v.img)
+                        save.backImg=v.imgName
+                    end
+                else
+                    v["index"] = index
+                    inStorePrompt=v 
+                end
+                return true
+            end
+            return false
         end)
     end
+end
+
+function drawExitButton(width,height,fun)
+    local color = {
+        active=uistyle.exitactive,
+        btn=uistyle.exitcolor,
+        shading=uistyle.exitshading,
+        text=uistyle.white
+    }
+    local nw,nh=30,30
+    local fun = fun or function () end
+    btn("X",cardfont,screenw/2+width/2-nw-10,screenh/2-height/2+10,nw,nh,color,fun)
 end

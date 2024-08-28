@@ -284,67 +284,11 @@ function love.mousepressed(x, y, button, istouch)
                     playSound("menu")
                 end
             end
-        elseif inStore then
-            if inStorePrompt==nil then
-                local whatButton = storeCollision(x,y)
-                playSound("menu")
-                if whatButton=="outside" then
-                    inStore=false
-                elseif whatButton==1 or whatButton==2 or whatButton==3 then
-                    storeState=whatButton
-                    storePage=1
-                    if storeState==1 then
-                        storePages=math.ceil(#storeItems/(storeMax*storeRows))
-                    elseif storeState==2 then
-                        storePages=math.ceil(#storeCB/(storeMax*storeRows))
-                    elseif storeState==3 then
-                        storePages=math.ceil(#storeBacks/(storeMax*storeRows))
-                    end
-                elseif whatButton=="nextPage" then
-                    storePage=math.min(storePage+1,storePages)
-                elseif whatButton=="prevPage" then
-                    storePage=math.max(storePage-1,1)
-                end
-            else
-                local whatButton = storePromptCollision(x,y)
-                playSound("menu")
-                if whatButton=="buy" then
-                    if save.coins>=inStorePrompt.price then
-                        if storeState==1 then
-                            cardStyle=inStorePrompt
-                            storeItems[inStorePrompt.index].bought = true
-                        elseif storeState==2 then
-                            cardBack=inStorePrompt.img
-                            save.backCard=inStorePrompt.imgName
-                            storeCB[inStorePrompt.index].bought=true
-                        elseif storeState==3 then
-                            changeBack(inStorePrompt.img)
-                            save.backImg=inStorePrompt.imgName
-                            storeBacks[inStorePrompt.index].bought=true
-                        end
-                        save.coins=save.coins-inStorePrompt.price
-                        inStorePrompt=nil
-                        inStore=false                        
-                    end
-                elseif whatButton=="outside" then
-                    inStorePrompt=nil
-                    mouseReleasedPos=nil
-                end
-            end
         elseif inStats then
             local whatButton = statsCollision(x,y)
             playSound("menu")
             if whatButton=="outside" then
                 inStats=false
-            end
-        elseif inVictory then
-            local whatButton = victoryCollision(x,y)
-            playSound("menu")
-            if whatButton=="new" then
-                pressButton(3)
-                inVictory=false
-            elseif whatButton=="outside" then
-                inVictory=false
             end
         elseif inSettings then
             local whatButton = settingsCollision(x,y)
