@@ -145,7 +145,7 @@ function drawStore()
         local y = screenh/2-height/2 + height/25+ySpacing
         storeDraw(storeBacks,y,width,height)
     end
-    
+
     --Dock render
     local imgw, imgh = coinImg:getDimensions()
     local scale = (height/8-10)/imgh
@@ -512,21 +512,24 @@ function drawSettingsEraseAll()
     drawButton(text,x,y,nw,nh)
 end
 
-function drawButton(text,x,y,w,h)
-    drawButtonFont(text,cardfont,x,y,w,h)
+function drawButton(text,x,y,w,h,fun)
+    local fn = fun or function () end
+    drawButtonFont(text,cardfont,x,y,w,h,fn)
 end
 
-function drawButtonFont(text,font,x,y,w,h)
+function drawButtonFont(text,font,x,y,w,h,fun)
+    local fn = fun or function () end
     local color = {
         shading = uistyle.btnshading,
         active = uistyle.btnactive,
         btn = uistyle.btncolor,
         text = uistyle.textcolor
     }
-    btn(text,font,x,y,w,h,color)
+    btn(text,font,x,y,w,h,color,fn)
 end
 
-function btn(text,font,x,y,w,h,color)
+function btn(text,font,x,y,w,h,color,fun)
+    local fn = fun or function () end
     love.graphics.setColor(color.shading)
     love.graphics.rectangle("fill",x+5,y+5,w,h)
     local mx,my = love.mouse.getPosition()
@@ -534,6 +537,14 @@ function btn(text,font,x,y,w,h,color)
         love.graphics.setColor(color.active)
     else
         love.graphics.setColor(color.btn)
+    end
+
+    if mouseReleasedPos~=nil then
+        local mx,my = mouseReleasedPos.x,mouseReleasedPos.y
+        if mx >= x and mx <= x+w and my >= y and my <= y+h then
+            fn()
+            mouseReleasedPos=nil
+        end
     end
     love.graphics.rectangle("fill",x,y,w,h)
     love.graphics.setColor(color.text)
@@ -594,7 +605,7 @@ function storeDraw(table,giveny,width,height)
         local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
         local v = table[k+(storeMax*storeRows*(storePage-1))]
         if v==nil then break end
-        if v.img~=nil then storeDrawBack(x,y,v.img) else storeDrawCard("K","spades",x,y,v) end
+        if v.img~=nil then storeDrawBack(x,y,v.img,v) else storeDrawCard("K","spades",x,y,v) end
         local color = {
             active=uistyle.btnactive,
             btn=uistyle.btncolor,
@@ -607,6 +618,8 @@ function storeDraw(table,giveny,width,height)
             text=";D"
             color.btn=color.active
         end
-        btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color)
+        btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color,function ()
+            inStorePrompt=v            
+        end)
     end
 end

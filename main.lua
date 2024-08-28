@@ -1824,5 +1824,9 @@ function checkIfPileLast(lastlist)
     if string.match(lastlist,"pile") or lastlist=="litter" then return false else return true end
 end
 
+function love.mousereleased(x,y)
+    mouseReleasedPos = {x=x,y=y}
+end
+
 
 

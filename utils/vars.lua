@@ -23,6 +23,8 @@ androidInterSpacing = 10
 androidOverhead = 0
 androidSmall = 0.1
 
+mouseReleasedPos = nil
+
 coinImg = love.graphics.newImage("img/coin.png")
 settingsImg = love.graphics.newImage("img/settings.png")
 
