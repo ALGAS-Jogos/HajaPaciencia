@@ -214,6 +214,7 @@ function love.update(dt)
 end
 
 function love.mousepressed(x, y, button, istouch)
+    mouseReleasedPos=nil
     if button == 1 then 
         if inStats==false and inStore==false and inVictory==false and inSettings==false and settingsEraseAll==false then
             if cardonhand==nil then
@@ -327,6 +328,7 @@ function love.mousepressed(x, y, button, istouch)
                     end
                 elseif whatButton=="outside" then
                     inStorePrompt=nil
+                    mouseReleasedPos=nil
                 end
             end
         elseif inStats then
@@ -768,7 +770,7 @@ function storeCollision(mx,my)
                     inStore=false
                     return "card"
                 end
-                inStorePrompt=v
+                --inStorePrompt=v
                 return "card"
             end
         end
@@ -795,7 +797,7 @@ function storeCollision(mx,my)
                     inStore=false
                     return "card"
                 end
-                inStorePrompt=v
+                --inStorePrompt=v
                 return "card"
             end
         end
@@ -822,7 +824,7 @@ function storeCollision(mx,my)
                     inStore=false
                     return "card"
                 end
-                inStorePrompt=v
+                --inStorePrompt=v
                 return "card"
             end
         end
@@ -854,7 +856,7 @@ end
 
 --Collision of the storePrompt
 function storePromptCollision(mx,my)
-    local cellFactor = 2
+    local cellFactor = 2.3
     if system=="Android" then cellFactor=1.60 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)

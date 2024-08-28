@@ -199,14 +199,14 @@ end
 
 function drawStorePrompt()
    
+    if inStorePrompt==nil then return nil end
     --draw the base rectangle and its border
-    local cellFactor = 2
+    local cellFactor = 2.3
     if system=="Android" then cellFactor=1.60 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
     drawPanel(width,height)
-
-    love.graphics.setLineWidth(oldThick)
+    
     if storeState==1 then
         local naipesDraw = {"spades","hearts","clubs","diamonds"}
         for k,v in ipairs(naipesDraw) do
@@ -214,16 +214,12 @@ function drawStorePrompt()
             local otherSpacing = ((screenw/2-width/2+(4)*(cardw+spacing))-width)/4
             --if k>1 then otherSpacing=0 end
             local x = screenw/2-width/2+(k-1)*(cardw+spacing) + otherSpacing
-            local y = screenh/2-height/2 + height/10
+            local y = screenh/2-height/2 +10*2+30
             storeDrawCard("A",v,x,y,inStorePrompt)
         end
-    elseif storeState==2 then
+    else
         local x = screenw/2-cardw/2
-        local y = screenh/2-height/2 + height/10
-        storeDrawBack(x,y,inStorePrompt.img)
-    elseif storeState==3 then
-        local x = screenw/2-cardw/2
-        local y = screenh/2-height/2 + height/10
+        local y = screenh/2-height/2+30+10*2
         storeDrawBack(x,y,inStorePrompt.img)
     end
 
@@ -247,6 +243,18 @@ function drawStorePrompt()
     nw=inStorePrompt.font:getWidth(inStorePrompt.name)+30
     x = screenw/2-nw/2
     btn(inStorePrompt.name,inStorePrompt.font,x,y,nw,nh,color)
+
+    local nw,nh=30,30
+    local color = {
+        active=uistyle.exitactive,
+        btn=uistyle.exitcolor,
+        shading=uistyle.exitshading,
+        text=uistyle.white
+    }
+    btn("X",cardfont,screenw/2+width/2-nw-10,screenh/2-height/2+10,nw,nh,color,function ()
+        inStorePrompt=nil
+        mouseReleasedPos=nil
+    end)
 end
 
 function drawAllVisible()
@@ -368,6 +376,7 @@ end
 
 --Same as drawCard but it also takes a cardStyle input
 function storeDrawCard(number,suit,x,y,cardStyle)
+    if cardStyle==nil then return nil end
     local colortext = cardStyle.textcolor
     local colorsuit = cardStyle.suitcolor
     if suit=="diamonds" or suit=="hearts" then
@@ -402,10 +411,18 @@ function storeDrawCard(number,suit,x,y,cardStyle)
     end
     love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
     love.graphics.setColor(1,1,1)
+
+    if mouseReleasedPos~=nil and inStorePrompt==nil then
+        local mx,my = mouseReleasedPos.x,mouseReleasedPos.y
+        if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+            inStorePrompt=cardStyle
+            mouseReleasedPos=nil
+        end
+    end
 end
 
 --Same as drawBack but it also takes an image as a back image
-function storeDrawBack(x,y,img)
+function storeDrawBack(x,y,img,v)
     love.graphics.setColor(0,0,0)
     love.graphics.rectangle("line",x,y,cardw,cardh,round)
     love.graphics.setColor(1,1,1)
@@ -418,6 +435,14 @@ function storeDrawBack(x,y,img)
     love.graphics.draw(img,x,y,0,scaleX,scaleY)
     love.graphics.setStencilTest()
     love.graphics.setColor(1,1,1)
+
+    if mouseReleasedPos~=nil and inStorePrompt==nil then
+        local mx,my = mouseReleasedPos.x,mouseReleasedPos.y
+        if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+            inStorePrompt=v
+            mouseReleasedPos=nil
+        end
+    end
 end
 
 function drawSettings()
@@ -619,7 +644,7 @@ function storeDraw(table,giveny,width,height)
             color.btn=color.active
         end
         btn(text,cardfont,x,y+cardh+3,cardw,cardfont:getHeight()+5,color,function ()
-            inStorePrompt=v            
+            if inStorePrompt==nil then inStorePrompt=v end
         end)
     end
 end

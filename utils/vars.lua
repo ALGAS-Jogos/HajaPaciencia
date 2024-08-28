@@ -137,6 +137,9 @@ uistyle = {
     backcolor = {0.035, 0.388, 0},
     backshading = {0.012, 0.11, 0},
     textcolor = {1,1,1},
-    grayback = {0,0,0,0.6}
+    grayback = {0,0,0,0.6},
+    exitcolor = {1, 0.239, 0.055},
+    exitactive = {1, 0.49, 0.365},
+    exitshading = {0.569, 0.11, 0}
 }
 
