@@ -37,7 +37,10 @@ function loadStoreCB()
         {name="Red Flowers",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back5.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Deep Blue",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back6.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back7.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Black Hole",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="cards/back8.png",color={0.05,0.05,0.05},textcolor={1,1,1}}
+        {name="Black Hole",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="cards/back8.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back9.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back10.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back11.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
     }
     return obj
 end

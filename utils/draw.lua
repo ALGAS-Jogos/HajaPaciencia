@@ -125,24 +125,22 @@ function stencilRounded()
     love.graphics.rectangle("fill",GLOBALBACKX,GLOBALBACKY,cardw,cardh,round)
 end
 
-
-
 function drawStore()
     --draw the base rectangle and its border
     local cellFactor = 4
     if system=="Android" then cellFactor=3.5 end
+    local androidTax = 0
+    if system=="Android" then androidTax=10+30+10 end
     local width = screenw-(screenw/8)
     local height = screenh-(screenh/cellFactor)
     drawPanel(width,height)
     local ySpacing = cardfontsize+5
+    local y = screenh/2-height/2 + height/25+ySpacing+androidTax  
     if storeState==1 then
-        local y = screenh/2-height/2 + height/25+ySpacing      
         storeDraw(storeItems,y,width,height)
     elseif storeState==2 then
-        local y = screenh/2-height/2 + height/25+ySpacing
         storeDraw(storeCB,y,width,height)
     elseif storeState==3 then
-        local y = screenh/2-height/2 + height/25+ySpacing
         storeDraw(storeBacks,y,width,height)
     end
 
@@ -164,7 +162,7 @@ function drawStore()
     local nw = cardfont:getWidth(storeButtons[1])+15
     local totalWidth = nw*3
     local spacing = (screenw-totalWidth)/4
-    local y = screenh/2-height/2+5
+    local y = screenh/2-height/2+5+androidTax
     local nh = cardfontsize+10
     for i=1,3 do
         local x = (i-1)*(nw+spacing)+spacing
@@ -451,7 +449,7 @@ function storeDrawCard(number,suit,x,y,insideCardStyle,index)
             if insideCardStyle.bought then
                 cardStyle=insideCardStyle
             else
-                v["index"] = index
+                insideCardStyle["index"] = index
                 inStorePrompt=insideCardStyle
             end
             mouseReleasedPos=nil
