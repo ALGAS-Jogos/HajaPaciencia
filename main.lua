@@ -605,103 +605,6 @@ function checkForButtons(mx,my)
         end
 end
 
---Collision for the stats screen
-function statsCollision(mx,my)
-    local cellFactor = 3
-    if system=="Android" then cellFactor=2 end
-    local width = screenw-(screenw/4)
-    local height = screenh-(screenh/cellFactor)
-    local nw = cardfont:getWidth("Voltar")+30
-    local nh = height/6
-    local x = screenw/2-nw/2
-    local y = screenh/2+height/2-nh-15
-    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
-        return "outside"
-    end
-    x = screenw/2-width/2
-    y = screenh/2-height/2
-    if mx >= x and mx <= x+width and my >= y and my <= y+height then 
-    else
-        return "outside"
-    end
-end
-
-function settingsCollision(mx,my)
-    --grey the background out
-    love.graphics.setColor(0,0,0,0.3)
-    love.graphics.rectangle('fill',0,0,screenw,screenh)
-    --draw the base rectangle and its border
-    local cellFactor = 2.8
-    if system=="Android" then cellFactor=2.4 end
-    local width = screenw-(screenw/4)
-    local height = screenh-(screenh/cellFactor)
-    local x = screenw/2-width/2
-    local y = screenh/2-height/2+15
-    local ySpacing = cardfont:getHeight()-10
-    y=y+cardfontsize+ySpacing
-    local count = 0
-    local objective = settingsPage*settingsAllowed-settingsAllowed
-    for i,v in pairs(settings) do
-        count=count+1
-        if count>settingsAllowed*settingsPage then break end
-        if count>objective then
-            y=y+ySpacing+ySpacing+10
-            local nw = cardfont:getWidth("+")+30
-            local nh = cardfont:getHeight()+5
-            local nx = x+width-nw-15
-            --o mais
-            if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
-                return {name=v.name,action="plus"}
-            end
-            nx=x+10
-            if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
-                return {name=v.name,action="minus"}
-            end
-            y=y+cardfontsize+ySpacing+5
-        end
-    end
-
-    local nw = cardfont:getWidth("Apagar dados")+30
-    local nh = cardfont:getHeight()+5
-    local nx = x+15
-    y=screenh/2+height/2-nh-15-nh-15
-    if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
-        return "eraseSave"
-    end
-    nw = cardfont:getWidth("Voltar")+30
-    nh = cardfont:getHeight()+5
-    nx = x+15
-    y=screenh/2+height/2-nh-15
-    if mx >= nx and mx <= nx+nw and my >= y and my <= y+nh then
-        return "outside"
-    end
-
-    local nw = cardfont:getWidth(">")+15
-    local nh = cardfontsize+10
-    local x = screenw/2+width/2-nw-15
-    local y = screenh/2-height/2+height-nh-15
-    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
-        return "nextPage"
-    end
-    nw = cardfont:getWidth(settingsPage.."/"..settingsPages)+15
-    x = x-nw-5
-    nw = cardfont:getWidth("<")+15
-    x = x-nw-5
-    if mx >= x and mx <= x+nw and my >= y and my <= y+nh then
-        return "prevPage"
-    end
-
-
-
-    x = screenw/2-width/2
-    y = screenh/2-height/2
-    if mx >= x and mx <= x+width and my >= y and my <= y+height then 
-    else
-        return "outside"
-    end
-    return "ok"
-end
-
 --Checks if the suits are opposite colors
 function checkOpposite(suitx,suity)
     local xcolor = 0
@@ -997,8 +900,9 @@ function getRedo()
             local to = splitted[1]
             local size = tonumber(splitted[3])
             local index = tonumber(splitted[4])
-            index = execMove(from,to,size,index,"redo")
-            move = from.."|"..to.."|"..size.."|"..index
+            local behindHidden = splitted[5]
+            index = execMove(from,to,size,index,"redo",behindHidden)
+            move = from.."|"..to.."|"..size.."|"..index.."|"..tostring(behindHidden)
         end
         lastMoves[#lastMoves+1] = move
         lastMovesIndex = #lastMoves+1
