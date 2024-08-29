@@ -294,7 +294,11 @@ function drawAllVisible()
     local nh = cardfont:getHeight()+15
     local x = screenw/2-nw/2
     local y = screenh-nh-buttonHeight-20-15
-    drawButton(text,x,y,nw,nh)
+    drawButton(text,x,y,nw,nh,function ()
+        winning=true
+        allVisible=false
+        winningCD=0
+    end)
 end
 
 function drawVictory()
@@ -402,7 +406,10 @@ function drawStats()
     local nh = cardfont:getHeight()+10
     local x = screenw/2-nw/2
     local y = screenh/2+height/2-nh-15
-    drawButton("Voltar",x,y,nw,nh)
+    drawButton("Voltar",x,y,nw,nh,function ()
+        inStats=false
+        return true
+    end)
 end
 
 --Same as drawCard but it also takes a cardStyle input
@@ -497,7 +504,7 @@ end
 function drawSettings()
     --draw the base rectangle and its border
     local cellFactor = 2.8
-    if system=="Android" then cellFactor=2.4 end
+    if system=="Android" then cellFactor=2.6 end
     local width = screenw-(screenw/4)
     local height = screenh-(screenh/cellFactor)
     
@@ -520,9 +527,35 @@ function drawSettings()
             local nw = cardfont:getWidth("+")+30
             local nh = cardfont:getHeight()+5
             local nx = x+width-nw-15
-            drawButton("+",nx,y+2.5,nw,nh)
+            drawButton("+",nx,y+2.5,nw,nh,function ()
+                local whatButton=v
+                if whatButton.name=="Cor do fundo" then
+                    switchNext(settings.backColor)
+                elseif whatButton.name=="Dificuldade" then
+                    switchNext(settings.hardSetting)
+                elseif whatButton.name=="Vel. Animação" then
+                    stepSetting(settings.animationSpeed,1)
+                elseif whatButton.name=="Volume" then
+                    stepSetting(settings.volume,1)
+                    love.audio.setVolume(settings.volume.value/100)
+                end
+                return true
+            end)
             nx=x+10
-            drawButton("-",nx,y+2.5,nw,nh)
+            drawButton("-",nx,y+2.5,nw,nh, function ()
+                local whatButton = v
+                if whatButton.name=="Cor do fundo" then
+                    switchPrior(settings.backColor)
+                elseif whatButton.name=="Dificuldade" then
+                    switchPrior(settings.hardSetting)
+                elseif whatButton.name=="Vel. Animação" then
+                    stepSetting(settings.animationSpeed,-1)
+                elseif whatButton.name=="Volume" then
+                    stepSetting(settings.volume,-1)
+                    love.audio.setVolume(settings.volume.value/100)
+                end
+                return true
+            end)
             love.graphics.setColor(1,1,1)
             love.graphics.printf(v.value,cardfont,x,y,width,"center")
             y=y+cardfontsize+ySpacing+5
@@ -533,26 +566,38 @@ function drawSettings()
     local nh = cardfont:getHeight()+5
     local nx = x+15
     y=screenh/2+height/2-nh-15-nh-15
-    drawButton("Apagar dados",nx,y,nw,nh)
+    drawButton("Apagar dados",nx,y,nw,nh, function ()
+        if settingsEraseAll==false then settingsEraseAll=true end
+        return true
+    end)
 
     local nw = cardfont:getWidth("Voltar")+30
     local nh = cardfont:getHeight()+5
     local nx = x+15
     y=screenh/2+height/2-nh-15
-    drawButton("Voltar",nx,y,nw,nh)
+    drawButton("Voltar",nx,y,nw,nh, function ()
+        inSettings=false
+        return true
+    end)
     --reset button
 
     local nw = cardfont:getWidth(">")+15
     local nh = cardfontsize+10
     local x = screenw/2+width/2-nw-15
     local y = screenh/2-height/2+height-nh-15
-    drawButton(">",x,y,nw,nh)
+    drawButton(">",x,y,nw,nh,function ()
+        settingsPage=math.min(settingsPage+1,settingsPages)
+        return true
+    end)
     nw = cardfont:getWidth(settingsPage.."/"..settingsPages)+15
     x = x-nw-5
     love.graphics.printf(settingsPage.."/"..settingsPages,cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
     nw = cardfont:getWidth("<")+15
     x = x-nw-5
-    drawButton("<",x,y,nw,nh)
+    drawButton("<",x,y,nw,nh,function ()
+        settingsPage=math.max(settingsPage-1,1)
+        return true
+    end)
 
 
     love.graphics.setColor(1,1,1)
@@ -578,12 +623,21 @@ function drawSettingsEraseAll()
     local nh = height/6
     local x = screenw/2-width/2+nw/2+5
     local y = screenh/2+height/2-nh-15
-    drawButton(text,x,y,nw,nh)
+    drawButton(text,x,y,nw,nh,function ()
+        settingsEraseAll=false
+        return true
+    end)
 
     local text = "Sim"
     local nw = cardfont:getWidth(text)+30
     local x = screenw/2+width/2-nw-nw/2-5
-    drawButton(text,x,y,nw,nh)
+    drawButton(text,x,y,nw,nh,function ()
+        eraseSave()
+        settingsEraseAll=false
+        startGame()
+        playSound("new")
+        return true
+    end)
 end
 
 function drawButton(text,x,y,w,h,fun)
