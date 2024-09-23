@@ -135,7 +135,8 @@ function drawStore()
     local height = screenh-(screenh/cellFactor)
     drawPanel(width,height)
     local ySpacing = cardfontsize+5
-    local y = screenh/2-height/2 + height/25+ySpacing+androidTax  
+    local y = screenh/2-height/2 + height/25+ySpacing+androidTax
+    if system=="Android" then drawHeader("Loja",screenw/2-width/2,screenh/2-height/2,width,"left",15) end
     if storeState==1 then
         storeDraw(storeItems,y,width,height)
     elseif storeState==2 then
@@ -782,4 +783,17 @@ function drawExitButton(width,height,fun)
     local nw,nh=30,30
     local fun = fun or function () end
     btn("X",cardfont,screenw/2+width/2-nw-10,screenh/2-height/2+10,nw,nh,color,fun)
+end
+
+function drawHeader(text,x,y,width,align,spacing)
+    --love.graphics.rectangle("fill",x+spacing-5,y+spacing+cardfont:getHeight()/2,cardfont:getWidth(text)+5*2,cardfont:getHeight()/2)
+    drawText(text,x+2,y+2,width,align,spacing,uistyle.btnshading)
+    drawText(text,x,y,width,align,spacing,uistyle.textcolor)
+end
+
+function drawText(text,x,y,width,align,spacing,color)
+    color = color or uistyle.textcolor
+    love.graphics.setColor(color)
+    align = align or "center"
+    love.graphics.printf(text,cardfont,x+spacing,y+spacing,width-spacing*2,align)
 end
