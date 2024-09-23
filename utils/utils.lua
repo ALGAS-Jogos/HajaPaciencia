@@ -22,6 +22,7 @@ function file_exists(file)
     if f then f:close() end
     return f ~= nil
 end
+
 -- get all lines from a file, returns an empty 
 -- list/table if the file does not exist
 function linesFrom(file)
@@ -43,9 +44,19 @@ function split(str, sep)
     return result
 end
 
+--Returns a deep copy of a table
 function deepcopy(obj)
     if type(obj) ~= 'table' then return obj end
     local res = {}
     for k, v in pairs(obj) do res[deepcopy(k)] = deepcopy(v) end
     return res
+end
+
+--Helper function to invert a table (move this)
+function invertTable(list)
+    local obj = {}
+    for i=1,#list do
+        obj[#list-i+1] = list[i]
+    end
+    return obj
 end
