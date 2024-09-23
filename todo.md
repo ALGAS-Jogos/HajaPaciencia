@@ -5,4 +5,4 @@
 - [ ] Adicionar mais 10 fundos de jogo.
 - [ ] Adicionar configuração para alteração de tema da interface.
 - [ ] Reduzir e fragmentar main.lua em vários arquivos.
-- [ ] Colocar título na loja
+- [X] Colocar título na loja
