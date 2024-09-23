@@ -32,15 +32,7 @@ function linesFrom(file)
     end
     return lines
 end
---checks if all cards in lists are visible and does shit accordingly
-function checkAllVisible()
-    for k,v in ipairs(cardlists) do
-        for i,c in ipairs(v) do
-            if c.visible==false then return false end
-        end
-    end
-   return true
-end
+
 --Splits strings into a table of strings based on a separator char
 function split(str, sep)
     local result = {}
