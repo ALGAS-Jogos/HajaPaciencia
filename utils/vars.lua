@@ -57,6 +57,7 @@ storePage = 1
 storePages = 1
 storeMax = 6
 storeRows = 2
+--if system=="Android" then storeRows=5 end
 
 save = {
     coins=500,

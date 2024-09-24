@@ -62,7 +62,11 @@ function loadStoreBacks()
         {name="Nascer do sol",price=450,bought=false,fontName="fonts/Outfit.ttf",font="fonts/Outfit.ttf",imgName="backgrounds/back7.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Buraco negro estelar",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="backgrounds/back8.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Céu na floresta",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back9.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Cachorro do natal",price=650,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back10.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}}
+        {name="Cachorro do natal",price=650,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back10.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Montanhas na distância",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back11.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Flor alaranjada",price=300,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back12.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Planta a crescer",price=550,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back13.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Nuvens a pensar",price=600,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back14.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}}
     }
     return obj
 end

@@ -159,7 +159,7 @@ function drawStore()
     local x = screenw/2+width/2-nw-15
     local y = screenh/2-height/2+height-dockh
     drawButton(">",x,y,nw,nh,function ()
-        storePage=math.max(storePage+1,storePages)
+        storePage=math.min(storePage+1,storePages)
         return true
     end)
     nw = cardfont:getWidth(storePage.."/"..storePages)+15
@@ -168,7 +168,7 @@ function drawStore()
     nw = cardfont:getWidth("<")+15
     x = x-nw-5
     drawButton("<",x,y,nw,nh, function ()
-        storePage=math.min(storePage-1,1)
+        storePage=math.max(storePage-1,1)
         return true
     end)
 
@@ -643,9 +643,6 @@ function storeDraw(table,giveny,width,height)
         local spacing = ((width-cardw*storeMax))/storeMax
         local otherSpacing = ((screenw/2-width/2+(storeMax)*(cardw+spacing))-width)/storeMax
         if k>storeMax*storeRows then break end
-        if k%(storeMax+1)==0 then
-            y=y+(cardh+cardfont:getHeight()+10*2)*math.floor(k/storeMax)
-        end
         if k>storeMax then itr=k%storeMax end
         if itr==0 then itr=storeMax end
         local x = screenw/2-width/2+(itr-1)*(cardw+spacing) + otherSpacing
@@ -685,6 +682,10 @@ function storeDraw(table,giveny,width,height)
             end
             return false
         end)
+        if k%(storeMax)==0 then
+            y=y+(cardh+cardfont:getHeight()+10*2)--*math.floor(k/storeMax)
+        end
+
     end
 end
 
