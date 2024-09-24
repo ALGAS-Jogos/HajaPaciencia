@@ -35,14 +35,14 @@ end
 --Loads the store card backs
 function loadStoreCB()
     local obj = {
-        {name="Default",price=0,bought=true,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="cards/back1.png",color={1,1,1},textcolor={0,0,0}},
-        {name="Black Wings",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back2.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Red Wings",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back3.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Knitting",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back4.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Red Flowers",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back5.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Deep Blue",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back6.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back7.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Black Hole",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="cards/back8.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Padrão",price=0,bought=true,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="cards/back1.png",color={1,1,1},textcolor={0,0,0}},
+        {name="Asas Negras",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back2.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Asas vermelhas",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back3.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Tear",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back4.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Flores de Carmim",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back5.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Azul Profundo",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back6.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Cruz Vermelha",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back7.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Buraco Negro",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="cards/back8.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back9.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back10.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
         {name="Red Cross",price=500,bought=false,fontName="fonts/RussoOne.ttf",font="fonts/RussoOne.ttf",imgName="cards/back11.png",color={0.05,0.05,0.05},textcolor={1,1,1}},
@@ -53,16 +53,16 @@ end
 --Loads the store background images
 function loadStoreBacks()
     local obj = {
-        {name="Default",price=0,bought=true,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back1.jpg",color={1,1,1},textcolor={0,0,0}},
-        {name="Forest",price=250,bought=false,fontName="fonts/Outfit.ttf",font="fonts/Outfit.ttf",imgName="backgrounds/back2.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Woodboard",price=300,bought=false,fontName="fonts/AlfaSlabOne.ttf",font="fonts/AlfaSlabOne.ttf",imgName="backgrounds/back3.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Waterfall",price=250,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back4.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Foggy Mountains",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back5.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Starry night",price=350,bought=false,fontName="fonts/Tektur.ttf",font="fonts/Tektur.ttf",imgName="backgrounds/back6.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Sunrise",price=450,bought=false,fontName="fonts/Outfit.ttf",font="fonts/Outfit.ttf",imgName="backgrounds/back7.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Black Hole Sun",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="backgrounds/back8.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Forest Sky",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back9.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
-        {name="Christmas Dog",price=650,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back10.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}}
+        {name="Padrão",price=0,bought=true,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back1.jpg",color={1,1,1},textcolor={0,0,0}},
+        {name="Floresta",price=250,bought=false,fontName="fonts/Outfit.ttf",font="fonts/Outfit.ttf",imgName="backgrounds/back2.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Madeira",price=300,bought=false,fontName="fonts/AlfaSlabOne.ttf",font="fonts/AlfaSlabOne.ttf",imgName="backgrounds/back3.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Cachoeira",price=250,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back4.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Montanha às névoas",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back5.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Noite estrelada",price=350,bought=false,fontName="fonts/Tektur.ttf",font="fonts/Tektur.ttf",imgName="backgrounds/back6.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Nascer do sol",price=450,bought=false,fontName="fonts/Outfit.ttf",font="fonts/Outfit.ttf",imgName="backgrounds/back7.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Buraco negro estelar",price=500,bought=false,fontName="fonts/BlackOpsOne.ttf",font="fonts/BlackOpsOne.ttf",imgName="backgrounds/back8.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Céu na floresta",price=450,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back9.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}},
+        {name="Cachorro do natal",price=650,bought=false,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",imgName="backgrounds/back10.jpg",color={0.05,0.05,0.05},textcolor={1,1,1}}
     }
     return obj
 end
