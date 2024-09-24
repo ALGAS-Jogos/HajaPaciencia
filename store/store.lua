@@ -25,7 +25,8 @@ function loadStoreItems()
         {name="Pastel",bought=false,price=650,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",color={0.981,0.91,0.875},textcolor={0.118,0.118,0.118},suitcolor={0.118,0.118,0.118},casered={0.82,0.02,0.208}},
         {name="Futurista",bought=false,price=450,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",color={0.1,0.1,0.1},textcolor={0,0.546,0.616},suitcolor={0,0.546,0.616},casered={0.899,0.216,0.216}},
         {name="Papiro",bought=false,price=600,fontName="fonts/Tektur.ttf",font="fonts/Tektur.ttf",color={0.953,0.934,0.875},textcolor={0,0,0},suitcolor={0,0,0},casered={0.969,0.106,0.106}},
-
+        {name="Esperança escura",bought=false,price=300,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",color={0,0.095,0.232},textcolor={0.428,0.95,0.475},suitcolor={0.428,0.95,0.475},casered={0.95,0.859,0.428}},
+        {name="Esperança espiritual",bought=false,price=350,fontName="fonts/Bricolage.ttf",font="fonts/Bricolage.ttf",color={0,0.095,0.232,0.85},textcolor={0.428,0.95,0.475},suitcolor={0.428,0.95,0.475},casered={0.95,0.859,0.428}},
         
     }
     return obj
