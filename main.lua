@@ -9,7 +9,7 @@ require("utils.utils")
 require("utils.settings")
 require("utils.cards")
 require("utils.vars")
-require("utils.card")
+require("utils.cardutils")
 
 local actualVersion = "1.5" --change the version
 local standard = 392 --my phone width
@@ -487,30 +487,28 @@ function checkPile(mx,my)
     --calculate the cardonhand rectangle
     if cardonhand~=nil then
         local cx = mx-cardonhand.cardx
-        local cy = my-cardonhand.cardy-- + ((i-1)*(cardh-cardh+cardfontsize+5))
+        local cy = my-cardonhand.cardy
         local cw = cardw
         local ch = cardh
 
-        for i=1,4 do --drawing the bottom of the piles
+        for i=1,4 do
             local x = i * (cardw+androidInterSpacing) - androidSpacing
             local y = cardh-cardh+cardfontsize+5 + androidOverhead
             if cardpile[i]==nil then
-                if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh then
-                    if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
-                        return i
-                    end
+                if checkCollisionCard(x,y,mx,my).collides then
+                    return i
                 end
             else
-                if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh and cardonhand[1].suit==cardpile[i][#cardpile[i]].suit then
+                if checkCollisionCard(x,y,cx,cy,cw,ch).collides and checkEqualSuits(cardonhand[1].suit,cardpile[i][#cardpile[i]].suit) then
                     return i
                 end
             end
         end
     else
-        for i=1,4 do --drawing the bottom of the piles
+        for i=1,4 do
             local x = i * (cardw+androidInterSpacing) - androidSpacing
             local y = cardh-cardh+cardfontsize+5 + androidOverhead
-            if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+            if checkCollisionCard(x,y,mx,my).collides then
                 return i
             end
         end

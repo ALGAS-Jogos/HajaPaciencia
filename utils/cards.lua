@@ -132,3 +132,8 @@ function checkCollisionCard(x,y,mx,my,mw,mh)
     end
     return {collides=false}
 end
+
+-- Returns true if the suits are equal
+function checkEqualSuits(suitx,suity)
+    return (suitx==suity)
+end
