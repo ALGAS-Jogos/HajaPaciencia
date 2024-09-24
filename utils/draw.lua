@@ -68,44 +68,6 @@ function drawButtons()
     love.graphics.setColor(1,1,1,1)
 end
 
-function drawCard(number,suit,x,y)
-    local colortext = cardStyle.textcolor
-    local colorsuit = cardStyle.suitcolor
-    if suit=="diamonds" or suit=="hearts" then
-        colortext=cardStyle.casered
-        colorsuit=cardStyle.casered
-    end
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(cardStyle.color)
-    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
-    if cardStyle.backImg then
-        local imgw, imgh = cardStyle.backImg:getDimensions()
-        local scaleX = cardw/imgw
-        local scaleY = cardh/imgh
-        love.graphics.draw(cardStyle.backImg,x,y,0,scaleX,scaleY)
-    end
-    love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),cardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
-    love.graphics.printf(tostring(number),cardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
-    love.graphics.setColor(colorsuit)
-
-    local smallSuitSize = suitSize-(suitSize*0.6)
-    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
-    local offset = 95*smallSuitSize
-    local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
-
-    local insideSuitSize = suitSize
-    if suit=="spades" and number=="A" then
-        insideSuitSize=insideSuitSize+0.20
-        if system=="Android" then insideSuitSize=insideSuitSize-0.15 end
-        y=y-5
-    end
-    love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
-    love.graphics.setColor(1,1,1)
-end
-
 function drawBack(x,y)
     love.graphics.setColor(0,0,0)
     love.graphics.rectangle("line",x,y,cardw,cardh,round)
@@ -230,7 +192,7 @@ function drawStorePrompt()
             --if k>1 then otherSpacing=0 end
             local x = screenw/2-width/2+(k-1)*(cardw+spacing) + otherSpacing
             local y = screenh/2-height/2 +10*2+30
-            storeDrawCard("A",v,x,y,inStorePrompt)
+            drawCardStyle("A",v,x,y,inStorePrompt)
         end
     else
         local x = screenw/2-cardw/2
@@ -411,59 +373,6 @@ function drawStats()
         inStats=false
         return true
     end)
-end
-
---Same as drawCard but it also takes a cardStyle input
-function storeDrawCard(number,suit,x,y,insideCardStyle,index)
-    if insideCardStyle==nil then return nil end
-    local colortext = insideCardStyle.textcolor
-    local colorsuit = insideCardStyle.suitcolor
-    if suit=="diamonds" or suit=="hearts" then
-        colortext=insideCardStyle.casered
-        colorsuit=insideCardStyle.casered
-    end
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("line",x,y,cardw,cardh,round)
-    love.graphics.setColor(insideCardStyle.color)
-    love.graphics.rectangle("fill",x,y,cardw,cardh,round)
-    if insideCardStyle.backImg then
-        local imgw, imgh = insideCardStyle.backImg:getDimensions()
-        local scaleX = cardw/imgw
-        local scaleY = cardh/imgh
-        love.graphics.draw(insideCardStyle.backImg,x,y,0,scaleX,scaleY)
-    end
-    love.graphics.setColor(colortext)
-    love.graphics.print(tostring(number),insideCardStyle.font,x+cardfontsize/10,y-cardfontsize/6)
-    love.graphics.printf(tostring(number),insideCardStyle.font,x,y+cardh-cardfontsize-3,cardw-2,"right")
-    love.graphics.setColor(colorsuit)
-
-    local smallSuitSize = suitSize-(suitSize*0.6)
-    if system=="Android" then smallSuitSize=smallSuitSize+0.05 end
-    local offset = 95*smallSuitSize
-    local lineheight = cardfontsize
-    love.graphics.draw(suits,naipes[suit],x+cardw-offset-(cardw*smallSuitSize/10),y+((119*smallSuitSize)/2)-lineheight/2+lineheight/4,0,smallSuitSize,smallSuitSize-(smallSuitSize*0.2))
-
-    local insideSuitSize = suitSize
-    if suit=="spades" and number=="A" then
-        insideSuitSize=insideSuitSize+0.20
-        y=y-5
-    end
-    love.graphics.draw(suits,naipes[suit],x+(cardw/2)-(95*insideSuitSize/2),y+(cardh/2)-(119*(insideSuitSize-0.1)/2),0,insideSuitSize,insideSuitSize-androidSmall)
-    love.graphics.setColor(1,1,1)
-
-    if mouseReleasedPos~=nil and inStorePrompt==nil then
-        local mx,my = mouseReleasedPos.x,mouseReleasedPos.y
-        if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
-            if insideCardStyle.bought then
-                cardStyle=insideCardStyle
-            else
-                insideCardStyle["index"] = index
-                inStorePrompt=insideCardStyle
-            end
-            mouseReleasedPos=nil
-            playSound("menu")
-        end
-    end
 end
 
 --Same as drawBack but it also takes an image as a back image
@@ -737,7 +646,7 @@ function storeDraw(table,giveny,width,height)
         local v = table[k+(storeMax*storeRows*(storePage-1))]
         if v==nil then break end
         local index = k+((storeMax*storeRows)*(storePage-1))
-        if v.img~=nil then storeDrawBack(x,y,v.img,v,index) else storeDrawCard("K","spades",x,y,v,index) end
+        if v.img~=nil then storeDrawBack(x,y,v.img,v,index) else drawCardStyle("K","spades",x,y,v,index) end
         local color = {
             active=uistyle.btnactive,
             btn=uistyle.btncolor,

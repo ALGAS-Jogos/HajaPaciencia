@@ -510,14 +510,3 @@ function resetCards()
     lastMoves={}
     lastMovesIndex=1
 end
-
---Helper function to get all the possible cards in a deck
-function allCards()
-    local obj = {}
-    for i=1,#cnaipes do
-        for j=1,#ordem do
-            obj[#obj+1] = {number=ordem[#ordem-j+1],suit=cnaipes[i]}
-        end
-    end
-    return obj
-end

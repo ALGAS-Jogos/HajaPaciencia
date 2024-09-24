@@ -1,23 +1,11 @@
 
-ordem = {"K","Q","J",10,9,8,7,6,5,4,3,2,"A"}
-cnaipes = {"spades","diamonds","clubs","hearts"}
-
 cardlists = {}
 cardstacks = {}
 cardpile = {}
 cardlitter = {}
 cardonhand = nil
-suits = love.graphics.newImage("img/out.png")
-spades = love.graphics.newQuad(0,0,100,119,420,119)
-diamonds = love.graphics.newQuad(110,0,90,119,420,119)
-clubs = love.graphics.newQuad(220,0,90,119,420,119)
-hearts = love.graphics.newQuad(330,0,90,119,420,119)
-naipes = {spades=spades,diamonds=diamonds,clubs=clubs,hearts=hearts}
-suitSize = 0.45
-cardfontsize = 32
+
 round = 7
-cardfont = love.graphics.newFont(cardfontsize)
-cardw,cardh = 100,150
 androidSpacing = 100
 androidInterSpacing = 10
 androidOverhead = 0
@@ -99,22 +87,6 @@ currentCD = 0
 timePunish = 0
 
 clickSendCD = 0
-
-cardStyle = {
-    color={1,1,1},
-    textcolor={0,0,0},
-    suitcolor={0,0,0},
-    casered={0.6,0,0},
-    backImg=nil,
-    fontName="fonts/Bricolage.ttf",
-    font="fonts/Bricolage.ttf",
-    bought=true,
-    price=0,
-    name="Default"
-}
-
-cardAnimate = {}
-cardAnimationCD = 0
 
 love.graphics.setBackgroundColor(0.2,0.05,0.2)
 
