@@ -16,7 +16,7 @@ local standard = 392 --my phone width
 
 
 function love.load()
-    local temp = readSave()
+    local temp = nil--readSave()
     if temp~=nil then
         save=temp        
         if save.version~=actualVersion then --put new shit in updates on the store!!!!
@@ -446,7 +446,7 @@ function checkCollisionTwo(mx,my)
         for i,card in ipairs(v) do
             local y = i * (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
             if i==#v and checkOpposite(cardonhand[1].suit,card.suit) and checkIfPost(cardonhand[1].number,card.number) then
-                if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh then
+                if checkCollisionCard(x,y,cx,cy,cw,ch).collides then
                     return card,k,i
                 end
             end
@@ -467,7 +467,7 @@ function checkForList(mx,my)
         for i=1,7 do
             local x = i * (cardw+androidInterSpacing) - androidSpacing
             local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
-            if cx+cw >= x and cx <= x+cardw and cy+ch >= y and cy <= y+cardh and #cardlists[i]==0 then
+            if checkCollisionCard(x,y,cx,cy,cw,ch).collides and #cardlists[i]==0 then
                 return i
             end
         end
@@ -475,7 +475,7 @@ function checkForList(mx,my)
         for i=1,7 do
             local x = i * (cardw+androidInterSpacing) - androidSpacing
             local y = (cardh-cardh+cardfontsize+5) + (cardh + 40) + androidOverhead
-            if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then
+            if checkCollisionCard(x,y,mx,my) then
                 return i
             end
         end
@@ -520,7 +520,7 @@ end
 function checkStack(mx,my)
     local x =  7 * (cardw+androidInterSpacing) - androidSpacing
     local y = cardh-cardh+cardfontsize+5 + androidOverhead
-    if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then            
+    if checkCollisionCard(x,y,mx,my).collides then            
         return true
     end
     return false
@@ -538,7 +538,7 @@ function checkLitter(mx,my)
         if cardlitter[#cardlitter-max+i] then
             local card = cardlitter[#cardlitter-max+i]
             if i==max then
-                if mx >= x and mx <= x+cardw and my >= y and my <= y+cardh then            
+                if checkCollisionCard(x,y,mx,my).collides then            
                     return {card}
                 end
             end

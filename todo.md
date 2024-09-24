@@ -6,3 +6,4 @@
 - [ ] Adicionar configuração para alteração de tema da interface.
 - [ ] Reduzir e fragmentar main.lua em vários arquivos.
 - [X] Colocar título na loja
+- [X] Criar um módulo Cards para uso em outros projetos.

@@ -158,13 +158,19 @@ function drawStore()
     local nh = cardfontsize+10
     local x = screenw/2+width/2-nw-15
     local y = screenh/2-height/2+height-dockh
-    drawButton(">",x,y,nw,nh)
+    drawButton(">",x,y,nw,nh,function ()
+        storePage=math.max(storePage+1,storePages)
+        return true
+    end)
     nw = cardfont:getWidth(storePage.."/"..storePages)+15
     x = x-nw-5
     love.graphics.printf(storePage.."/"..storePages,cardfont,x,y+(math.abs(nh-cardfontsize)/2),nw,"center")
     nw = cardfont:getWidth("<")+15
     x = x-nw-5
-    drawButton("<",x,y,nw,nh)
+    drawButton("<",x,y,nw,nh, function ()
+        storePage=math.min(storePage-1,1)
+        return true
+    end)
 
     drawExitButton(width,height,function ()
         inStore=false

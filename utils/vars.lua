@@ -72,7 +72,8 @@ save = {
     moves=0,
     backImg="backgrounds/back1.jpg",
     backCard="cards/back1.png",
-    version="1.3"
+    version="1.3", --UPDATE VERSION
+    isPaused=false
 }
 
 settings, settingsLen = loadSettings()
